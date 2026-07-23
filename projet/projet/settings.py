@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['192.168.131.216','127.0.0.1', 'localhost', 'dernieretherap-pro
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
-    'dernieretherap-production.up.railway.app',
+    'https://dernieretherap-production.up.railway.app',
     'http://127.0.0.1:5173',
 ]
 
@@ -126,6 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'frontend_react' / 'dist',
 ]

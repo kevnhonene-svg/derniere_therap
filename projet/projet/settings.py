@@ -25,10 +25,11 @@ SECRET_KEY = 'django-insecure-nwxn8ov(%7d4ih1s$r5i&ffvhly)wmm=bb9tp_o_krx9n8l9+3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.131.216','127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['192.168.131.216','127.0.0.1', 'localhost', 'dernieretherap-production.up.railway.app']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'dernieretherap-production.up.railway.app',
     'http://127.0.0.1:5173',
 ]
 

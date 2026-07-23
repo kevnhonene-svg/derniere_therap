@@ -1,0 +1,230 @@
+import { useMemo, useState } from 'react'
+import { BarChart3, Download, FileSpreadsheet, Filter } from 'lucide-react'
+import { categories } from '../../constants'
+import { api } from '../../services/api'
+
+const modules = [
+  ['all', 'Toutes les donnees'],
+  ['invites', 'Invites'],
+  ['tables', 'Tables'],
+  ['boissons', 'Boissons'],
+  ['quotas', 'Quotas'],
+  ['commandes', 'Commandes'],
+  ['messages', 'Messages'],
+]
+
+const statusOptions = [
+  ['en_attente', 'En attente'],
+  ['livree', 'Livree'],
+  ['annulee', 'Annulee'],
+]
+
+function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
+  const [exporting, setExporting] = useState(false)
+  const [filters, setFilters] = useState({
+    module: 'all',
+    search: '',
+    categorie_billet: '',
+    table_id: '',
+    actif: '',
+    est_protocole: '',
+    has_table: '',
+    active: '',
+    full: '',
+    stock: '',
+    statut: '',
+    auteur: '',
+    lu: '',
+    date_from: '',
+    date_to: '',
+  })
+
+  const exportStats = useMemo(() => {
+    const assigned = invites.filter((invite) => invite.table).length
+    const protocols = invites.filter((invite) => invite.est_protocole).length
+    const lowStock = boissons.filter((drink) => Number(drink.quantite_stock || 0) <= Number(drink.seuil_alerte || 0)).length
+    return [
+      { label: 'Invites exportables', value: invites.length, detail: `${assigned} avec table` },
+      { label: 'Protocoles', value: protocols, detail: 'contacts operationnels' },
+      { label: 'Boissons', value: boissons.length, detail: `${lowStock} stock faible` },
+      { label: 'Quotas', value: quotas.length, detail: 'regles disponibles' },
+    ]
+  }, [boissons, invites, quotas])
+
+  const setValue = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
+
+  const submit = async (event) => {
+    event.preventDefault()
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== '') params.set(key, value)
+    })
+    setExporting(true)
+    try {
+      await api.exportXlsx(params)
+    } catch (err) {
+      onError(err.message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  return (
+    <section className="admin-panel export-panel">
+      <div className="admin-panel-head">
+        <div>
+          <span className="admin-kicker">Statistiques</span>
+          <h1>Exports XLSX</h1>
+        </div>
+        <span className="export-badge"><FileSpreadsheet size={17} /> Generation backend</span>
+      </div>
+
+      <div className="export-stats">
+        {exportStats.map((stat) => (
+          <article key={stat.label}>
+            <strong>{stat.value}</strong>
+            <span>{stat.label}</span>
+            <small>{stat.detail}</small>
+          </article>
+        ))}
+      </div>
+
+      <form className="export-form" onSubmit={submit}>
+        <div className="export-form-title">
+          <Filter size={18} />
+          <span>Filtres d export</span>
+        </div>
+
+        <label className="field-label">Donnees a exporter
+          <select value={filters.module} onChange={(e) => setValue('module', e.target.value)}>
+            {modules.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+
+        <label className="field-label">Recherche globale
+          <input type="search" placeholder="Nom, code billet, table, note, message..." value={filters.search} onChange={(e) => setValue('search', e.target.value)} />
+        </label>
+
+        <label className="field-label">Type de billet
+          <select value={filters.categorie_billet} onChange={(e) => setValue('categorie_billet', e.target.value)}>
+            <option value="">Tous</option>
+            {categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+
+        <label className="field-label">Table assignee
+          <select value={filters.table_id} onChange={(e) => setValue('table_id', e.target.value)}>
+            <option value="">Toutes</option>
+            {tables.map((table) => <option key={table.id} value={table.id}>{table.nom}</option>)}
+          </select>
+        </label>
+
+        <label className="field-label">Invite actif
+          <select value={filters.actif} onChange={(e) => setValue('actif', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="true">Actifs</option>
+            <option value="false">Inactifs</option>
+          </select>
+        </label>
+
+        <label className="field-label">Role protocole
+          <select value={filters.est_protocole} onChange={(e) => setValue('est_protocole', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="true">Protocoles</option>
+            <option value="false">Clients simples</option>
+          </select>
+        </label>
+
+        <label className="field-label">Presence table
+          <select value={filters.has_table} onChange={(e) => setValue('has_table', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="oui">Avec table</option>
+            <option value="non">Sans table</option>
+          </select>
+        </label>
+
+        <label className="field-label">Table active
+          <select value={filters.active} onChange={(e) => setValue('active', e.target.value)}>
+            <option value="">Toutes</option>
+            <option value="true">Actives</option>
+            <option value="false">Inactives</option>
+          </select>
+        </label>
+
+        <label className="field-label">Occupation table
+          <select value={filters.full} onChange={(e) => setValue('full', e.target.value)}>
+            <option value="">Toutes</option>
+            <option value="oui">Pleines</option>
+            <option value="non">Disponibles</option>
+          </select>
+        </label>
+
+        <label className="field-label">Stock boisson
+          <select value={filters.stock} onChange={(e) => setValue('stock', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="disponible">Disponible</option>
+            <option value="faible">Stock faible</option>
+            <option value="rupture">Rupture</option>
+          </select>
+        </label>
+
+        <label className="field-label">Statut commande
+          <select value={filters.statut} onChange={(e) => setValue('statut', e.target.value)}>
+            <option value="">Tous</option>
+            {statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+
+        <label className="field-label">Auteur message
+          <select value={filters.auteur} onChange={(e) => setValue('auteur', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="client">Client</option>
+            <option value="protocole">Protocole</option>
+          </select>
+        </label>
+
+        <label className="field-label">Lecture message
+          <select value={filters.lu} onChange={(e) => setValue('lu', e.target.value)}>
+            <option value="">Tous</option>
+            <option value="true">Lus</option>
+            <option value="false">Non lus</option>
+          </select>
+        </label>
+
+        <label className="field-label">Date debut
+          <input type="date" value={filters.date_from} onChange={(e) => setValue('date_from', e.target.value)} />
+        </label>
+
+        <label className="field-label">Date fin
+          <input type="date" value={filters.date_to} onChange={(e) => setValue('date_to', e.target.value)} />
+        </label>
+
+        <div className="export-actions">
+          <button className="secondary" type="button" onClick={() => setFilters({
+            module: 'all',
+            search: '',
+            categorie_billet: '',
+            table_id: '',
+            actif: '',
+            est_protocole: '',
+            has_table: '',
+            active: '',
+            full: '',
+            stock: '',
+            statut: '',
+            auteur: '',
+            lu: '',
+            date_from: '',
+            date_to: '',
+          })}>Reinitialiser</button>
+          <button className="admin-primary" type="submit" disabled={exporting}>
+            {exporting ? <BarChart3 size={18} /> : <Download size={18} />}
+            <span>{exporting ? 'Generation...' : 'Exporter en XLSX'}</span>
+          </button>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+export default AdminStatsExport

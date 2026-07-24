@@ -23,6 +23,12 @@ function App() {
   }
 
   useEffect(() => {
+    const expireSession = () => {
+      setSession({ role: 'anonymous' })
+      setError('Session admin expiree. Reconnectez-vous.')
+    }
+
+    window.addEventListener('session-expired', expireSession)
     Promise.all([api.getConfig(), api.me()])
       .then(([cfg, me]) => {
         setConfig(cfg.configuration)
@@ -30,6 +36,8 @@ function App() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
+
+    return () => window.removeEventListener('session-expired', expireSession)
   }, [])
 
   const logout = async () => {

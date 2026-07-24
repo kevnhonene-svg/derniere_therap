@@ -12,7 +12,11 @@ async function request(path, options = {}) {
   })
   const data = await response.json().catch(() => ({}))
   if (!response.ok || data.success === false) {
-    throw new Error(typeof data.error === 'string' ? data.error : 'Operation impossible')
+    const message = typeof data.error === 'string' ? data.error : 'Operation impossible'
+    if (response.status === 403 && message.includes('superadmin')) {
+      window.dispatchEvent(new CustomEvent('session-expired'))
+    }
+    throw new Error(message)
   }
   return data
 }

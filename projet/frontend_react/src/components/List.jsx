@@ -1,4 +1,4 @@
-function List({ items, onEdit }) {
+function List({ items, onEdit, onDelete }) {
   if (!items.length) {
     return <div className="admin-empty">Aucune donnee disponible pour le moment.</div>
   }
@@ -10,6 +10,7 @@ function List({ items, onEdit }) {
           <b>{item.label || item}</b>
           {item.meta && <small>{item.meta}</small>}
           {onEdit && <button className="secondary" type="button" onClick={() => onEdit(item.raw || item)}>Modifier</button>}
+          {onDelete && <button className="danger" type="button" onClick={() => onDelete(item.raw || item)}>Supprimer</button>}
         </span>
       ))}
     </div>

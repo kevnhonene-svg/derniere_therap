@@ -103,6 +103,18 @@ function BoissonAdmin({ boissons, reload, onError }) {
       await reload()
     } catch (err) { onError(err.message) }
   }
+
+  const remove = async (boisson) => {
+    const ok = window.confirm(`Voulez-vous vraiment supprimer cette boisson ?\n\nNom: ${boisson.nom}\n\nCette action est definitive.`)
+    if (!ok) return
+    try {
+      await api.deleteBoisson(boisson.id)
+      await reload()
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
   return <CrudPanel title="Boissons" open={open} setOpen={setOpen} onSubmit={submit} buttonLabel="Ajouter une boisson" formTitle={editingBoisson ? 'Modifier boisson' : 'Nouvelle boisson'} onCreate={openCreate}>
     <div className="modal-fields">
       <label className="field-label">Nom de la boisson<input required name="nom" placeholder="Nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} /></label>
@@ -114,7 +126,7 @@ function BoissonAdmin({ boissons, reload, onError }) {
       <label className="field-label field-wide">Photo<input name="photo" type="file" accept="image/*" /></label>
       <label className="check-row"><input type="checkbox" checked={form.actif} onChange={(e) => setForm({ ...form, actif: e.target.checked })} /> Boisson active</label>
     </div>
-    <List items={boissons.map((b) => ({ id: b.id, label: b.nom, meta: `stock ${b.quantite_stock}${b.categorie ? ` - ${b.categorie}` : ''}${b.actif ? '' : ' - inactive'}`, raw: b }))} onEdit={openEdit} />
+    <List items={boissons.map((b) => ({ id: b.id, label: b.nom, meta: `stock ${b.quantite_stock}${b.categorie ? ` - ${b.categorie}` : ''}${b.actif ? '' : ' - inactive'}`, raw: b }))} onEdit={openEdit} onDelete={remove} />
   </CrudPanel>
 }
 

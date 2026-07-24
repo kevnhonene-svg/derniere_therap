@@ -1,4 +1,5 @@
 from django.http import UnreadablePostError
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
@@ -45,7 +46,7 @@ def boissons_admin(request):
     return success({'boisson': boisson_to_dict(boisson, request)}, status.HTTP_201_CREATED)
 
 
-@api_view(['PATCH'])
+@api_view(['PATCH', 'DELETE'])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def boisson_admin_detail(request, boisson_id):
@@ -56,6 +57,14 @@ def boisson_admin_detail(request, boisson_id):
         boisson = Boisson.objects.get(pk=boisson_id)
     except Boisson.DoesNotExist:
         return error('Boisson introuvable.', status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        nom = boisson.nom
+        try:
+            boisson.delete()
+        except ProtectedError:
+            return error('Cette boisson est deja liee a des commandes. Desactivez-la au lieu de la supprimer.')
+        return success({'message': f'Boisson {nom} supprimee.'})
 
     try:
         data = request.data

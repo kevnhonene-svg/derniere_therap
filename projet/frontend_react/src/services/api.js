@@ -59,6 +59,7 @@ export const api = {
   boissonsAdmin: () => request('/stock/boissons/admin/'),
   createBoisson: (formData) => request('/stock/boissons/admin/', { method: 'POST', body: formData }),
   updateBoisson: (id, formData) => request(`/stock/boissons/admin/${id}/`, { method: 'PATCH', body: formData }),
+  deleteBoisson: (id) => request(`/stock/boissons/admin/${id}/`, { method: 'DELETE', body: {} }),
   quota: () => request('/commandes/quota/'),
   quotas: () => request('/commandes/quotas/'),
   saveQuota: (payload) => request('/commandes/quotas/', { method: 'POST', body: payload }),

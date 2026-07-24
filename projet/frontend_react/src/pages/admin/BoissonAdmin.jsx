@@ -72,18 +72,22 @@ function BoissonAdmin({ boissons, reload, onError }) {
   const submit = async (event) => {
     event.preventDefault()
     const formElement = event.currentTarget
-    const data = new FormData(formElement)
-    data.set('actif', form.actif ? 'true' : 'false')
     try {
-      const photo = data.get('photo')
+      const formData = new FormData(formElement)
+      formData.set('actif', form.actif ? 'true' : 'false')
+      const photo = formData.get('photo')
+      let data = Object.fromEntries(formData.entries())
+      data.actif = form.actif
+
       if (photo instanceof File && !photo.name) {
-        data.delete('photo')
+        delete data.photo
       } else if (photo instanceof File) {
         const compressedPhoto = await compressPhoto(photo)
         if (compressedPhoto.size > MAX_PHOTO_SIZE) {
           onError('La photo est trop lourde. Choisissez une image plus legere.')
           return
         }
+        data = formData
         data.set('photo', compressedPhoto)
       }
 

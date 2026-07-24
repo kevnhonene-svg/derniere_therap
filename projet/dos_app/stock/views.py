@@ -1,3 +1,4 @@
+from django.http import UnreadablePostError
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
@@ -33,7 +34,12 @@ def boissons_admin(request):
         qs = Boisson.objects.all()
         return success({'boissons': BoissonSerializer(qs, many=True, context={'request': request}).data})
 
-    serializer = BoissonSerializer(data=request.data, context={'request': request})
+    try:
+        data = request.data
+    except UnreadablePostError:
+        return error('Upload interrompu. Reessayez avec une photo plus legere.', status.HTTP_400_BAD_REQUEST)
+
+    serializer = BoissonSerializer(data=data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     boisson = serializer.save()
     return success({'boisson': boisson_to_dict(boisson, request)}, status.HTTP_201_CREATED)
@@ -51,7 +57,12 @@ def boisson_admin_detail(request, boisson_id):
     except Boisson.DoesNotExist:
         return error('Boisson introuvable.', status.HTTP_404_NOT_FOUND)
 
-    serializer = BoissonSerializer(boisson, data=request.data, partial=True, context={'request': request})
+    try:
+        data = request.data
+    except UnreadablePostError:
+        return error('Upload interrompu. Reessayez avec une photo plus legere.', status.HTTP_400_BAD_REQUEST)
+
+    serializer = BoissonSerializer(boisson, data=data, partial=True, context={'request': request})
     serializer.is_valid(raise_exception=True)
     boisson = serializer.save()
     return success({'boisson': boisson_to_dict(boisson, request)})

@@ -3,6 +3,45 @@ import CrudPanel from '../../components/CrudPanel'
 import List from '../../components/List'
 import { api } from '../../services/api'
 
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024
+const PHOTO_MAX_DIMENSION = 1200
+
+const compressPhoto = (file) => new Promise((resolve, reject) => {
+  if (!(file instanceof File) || !file.name || !file.type.startsWith('image/')) {
+    resolve(file)
+    return
+  }
+
+  const image = new Image()
+  const url = URL.createObjectURL(file)
+
+  image.onload = () => {
+    URL.revokeObjectURL(url)
+    const scale = Math.min(1, PHOTO_MAX_DIMENSION / Math.max(image.width, image.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(image.width * scale))
+    canvas.height = Math.max(1, Math.round(image.height * scale))
+
+    const context = canvas.getContext('2d')
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Compression de la photo impossible'))
+        return
+      }
+      const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo'
+      resolve(new File([blob], `${baseName}.webp`, { type: 'image/webp' }))
+    }, 'image/webp', 0.82)
+  }
+
+  image.onerror = () => {
+    URL.revokeObjectURL(url)
+    reject(new Error('Photo invalide'))
+  }
+
+  image.src = url
+})
+
 function BoissonAdmin({ boissons, reload, onError }) {
   const [form, setForm] = useState({ nom: '', quantite_stock: 0, categorie: '', description: '', prix_indicatif: 0, seuil_alerte: 5, actif: true })
   const [open, setOpen] = useState(false)
@@ -35,11 +74,19 @@ function BoissonAdmin({ boissons, reload, onError }) {
     const formElement = event.currentTarget
     const data = new FormData(formElement)
     data.set('actif', form.actif ? 'true' : 'false')
-    const photo = data.get('photo')
-    if (photo instanceof File && !photo.name) {
-      data.delete('photo')
-    }
     try {
+      const photo = data.get('photo')
+      if (photo instanceof File && !photo.name) {
+        data.delete('photo')
+      } else if (photo instanceof File) {
+        const compressedPhoto = await compressPhoto(photo)
+        if (compressedPhoto.size > MAX_PHOTO_SIZE) {
+          onError('La photo est trop lourde. Choisissez une image plus legere.')
+          return
+        }
+        data.set('photo', compressedPhoto)
+      }
+
       if (editingBoisson) {
         await api.updateBoisson(editingBoisson.id, data)
       } else {

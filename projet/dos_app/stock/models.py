@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.files.base import ContentFile
-from PIL import Image
+from PIL import Image, ImageOps
 from io import BytesIO
 
 
@@ -29,10 +29,11 @@ class Boisson(models.Model):
 
     def save(self, *args, **kwargs):
         if self.photo and not self.photo.name.lower().endswith('.webp'):
-            image = Image.open(self.photo)
+            image = ImageOps.exif_transpose(Image.open(self.photo))
             if image.mode not in ('RGB', 'RGBA'):
                 image = image.convert('RGB')
 
+            image.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
             output = BytesIO()
             image.save(output, format='WEBP', quality=82, method=6)
             base_name = self.photo.name.rsplit('.', 1)[0].split('/')[-1]

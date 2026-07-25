@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'projet.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_PUBLIC_URL")
 
 if not DATABASE_URL:
     raise RuntimeError("La variable DATABASE_URL est obligatoire pour utiliser PostgreSQL.")

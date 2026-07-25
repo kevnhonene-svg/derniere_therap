@@ -87,9 +87,15 @@ WSGI_APPLICATION = 'projet.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("La variable DATABASE_URL est obligatoire pour utiliser PostgreSQL.")
+
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+        default=DATABASE_URL,
+        conn_max_age=600,
     )
 }
 

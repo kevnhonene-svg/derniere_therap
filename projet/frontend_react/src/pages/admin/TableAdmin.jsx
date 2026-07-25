@@ -39,13 +39,25 @@ function TableAdmin({ tables, reload, onError }) {
       await reload()
     } catch (err) { onError(err.message) }
   }
+
+  const deleteTable = async (table) => {
+    const ok = window.confirm(
+      `Voulez-vous vraiment supprimer la table "${table.nom}" ?\n\nCette action est definitive.`
+    )
+    if (!ok) return
+    try {
+      await api.deleteTable(table.id)
+      await reload()
+    } catch (err) { onError(err.message) }
+  }
+
   return <CrudPanel title="Tables" open={open} setOpen={setOpen} onSubmit={submit} buttonLabel="Ajouter une table" formTitle={editingTable ? 'Modifier table' : 'Nouvelle table'} onCreate={openCreate}>
     <div className="modal-fields">
       <label className="field-label">Nom de la table<input required placeholder="TABLE_1" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} /></label>
       <label className="field-label">Nombre de places<input required type="number" min="1" value={form.nombre_places} onChange={(e) => setForm({ ...form, nombre_places: e.target.value })} /></label>
       <label className="check-row"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> Table active</label>
     </div>
-    <List items={tables.map((t) => ({ id: t.id, label: t.nom, meta: `${t.places_occupees}/${t.nombre_places} places${t.active ? '' : ' - inactive'}`, raw: t }))} onEdit={openEdit} />
+    <List items={tables.map((t) => ({ id: t.id, label: t.nom, meta: `${t.places_occupees}/${t.nombre_places} places${t.active ? '' : ' - inactive'}`, raw: t }))} onEdit={openEdit} onDelete={deleteTable} />
   </CrudPanel>
 }
 

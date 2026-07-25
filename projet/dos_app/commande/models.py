@@ -21,6 +21,28 @@ class QuotaBillet(models.Model):
         return f'{self.get_categorie_billet_display()} - {self.nombre_bouteilles}'
 
 
+class IndicationQuotaBillet(models.Model):
+    categorie_billet = models.CharField(
+        max_length=30,
+        choices=Invite.CATEGORIES_BILLET,
+        unique=True,
+    )
+    titre = models.CharField(max_length=120, default='Quota indicatif')
+    nombre_bouteilles_indicatif = models.PositiveIntegerField(default=1)
+    description = models.TextField(blank=True)
+    actif = models.BooleanField(default=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    mise_a_jour = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['categorie_billet']
+        verbose_name = 'Indication quota billet'
+        verbose_name_plural = 'Indications quotas billets'
+
+    def __str__(self):
+        return f'{self.get_categorie_billet_display()} - {self.nombre_bouteilles_indicatif}'
+
+
 class Commande(models.Model):
     EN_ATTENTE = 'en_attente'
     VALIDEE = 'validee'

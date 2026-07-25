@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from dos_app.commande.models import Commande, LigneCommande, QuotaBillet
+from dos_app.commande.models import Commande, IndicationQuotaBillet, LigneCommande, QuotaBillet
 from dos_app.stock.serializers import BoissonSerializer
 
 
@@ -9,6 +9,17 @@ class QuotaBilletSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuotaBillet
         fields = ['id', 'categorie_billet', 'categorie_billet_label', 'nombre_bouteilles', 'actif']
+
+
+class IndicationQuotaBilletSerializer(serializers.ModelSerializer):
+    categorie_billet_label = serializers.CharField(source='get_categorie_billet_display', read_only=True)
+
+    class Meta:
+        model = IndicationQuotaBillet
+        fields = [
+            'id', 'categorie_billet', 'categorie_billet_label', 'titre',
+            'nombre_bouteilles_indicatif', 'description', 'actif',
+        ]
 
 
 class LigneCommandeSerializer(serializers.ModelSerializer):
@@ -45,6 +56,12 @@ class CommandeSerializer(serializers.ModelSerializer):
 
 def quota_to_dict(quota):
     return QuotaBilletSerializer(quota).data
+
+
+def indication_quota_to_dict(indication):
+    if not indication:
+        return None
+    return IndicationQuotaBilletSerializer(indication).data
 
 
 def commande_to_dict(commande, request=None):

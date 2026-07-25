@@ -1,5 +1,5 @@
 from django.contrib import admin
-from dos_app.commande.models import Commande, LigneCommande, QuotaBillet
+from dos_app.commande.models import Commande, IndicationQuotaBillet, LigneCommande, QuotaBillet
 
 
 class LigneCommandeInline(admin.TabularInline):
@@ -11,6 +11,13 @@ class LigneCommandeInline(admin.TabularInline):
 class QuotaBilletAdmin(admin.ModelAdmin):
     list_display = ('categorie_billet', 'nombre_bouteilles', 'actif')
     list_filter = ('actif',)
+
+
+@admin.register(IndicationQuotaBillet)
+class IndicationQuotaBilletAdmin(admin.ModelAdmin):
+    list_display = ('categorie_billet', 'titre', 'nombre_bouteilles_indicatif', 'actif')
+    list_filter = ('actif', 'categorie_billet')
+    search_fields = ('titre', 'description')
 
 
 @admin.register(Commande)

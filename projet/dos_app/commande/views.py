@@ -3,8 +3,15 @@ from django.db import models, transaction
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
-from dos_app.commande.models import Commande, LigneCommande, QuotaBillet
-from dos_app.commande.serializers import CommandeSerializer, QuotaBilletSerializer, commande_to_dict, quota_to_dict
+from dos_app.commande.models import Commande, IndicationQuotaBillet, LigneCommande, QuotaBillet
+from dos_app.commande.serializers import (
+    CommandeSerializer,
+    IndicationQuotaBilletSerializer,
+    QuotaBilletSerializer,
+    commande_to_dict,
+    indication_quota_to_dict,
+    quota_to_dict,
+)
 from dos_app.comptes.models import Invite
 from dos_app.comptes.utils import current_invite_id, error, json_body, protocol_or_admin, success
 from dos_app.stock.models import Boisson
@@ -38,8 +45,13 @@ def quota_courant(request):
         return error('Veuillez vous connecter avec votre code billet.', status.HTTP_401_UNAUTHORIZED)
     invite = Invite.objects.get(pk=invite_id)
     quota, utilise, restant = quota_info_for(invite)
+    indication = IndicationQuotaBillet.objects.filter(
+        categorie_billet=invite.categorie_billet,
+        actif=True,
+    ).first()
     return success({
         'quota': quota_to_dict(quota),
+        'indication_quota': indication_quota_to_dict(indication),
         'utilise': utilise,
         'restant': restant,
     })
@@ -57,14 +69,70 @@ def quotas_admin(request):
         return success({'quotas': QuotaBilletSerializer(quotas, many=True).data})
 
     data = json_body(request)
+    categorie_billet = data.get('categorie_billet', Invite.CLASSIQUE)
+    nombre_bouteilles = int(data.get('nombre_bouteilles') or 1)
+    indication = IndicationQuotaBillet.objects.filter(
+        categorie_billet=categorie_billet,
+        actif=True,
+    ).first()
+    if indication and nombre_bouteilles > indication.nombre_bouteilles_indicatif:
+        return error(
+            (
+                f"Quota reel impossible pour {indication.get_categorie_billet_display()}. "
+                f"Le quota indicatif est de {indication.nombre_bouteilles_indicatif} bouteille(s), "
+                f"mais vous avez saisi {nombre_bouteilles}. Ajustez d'abord le quota indicatif."
+            )
+        )
+
     quota, _ = QuotaBillet.objects.update_or_create(
-        categorie_billet=data.get('categorie_billet', Invite.CLASSIQUE),
+        categorie_billet=categorie_billet,
         defaults={
-            'nombre_bouteilles': int(data.get('nombre_bouteilles') or 1),
+            'nombre_bouteilles': nombre_bouteilles,
             'actif': bool(data.get('actif', True)),
         },
     )
     return success({'quota': quota_to_dict(quota)}, status.HTTP_201_CREATED)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def indications_quotas(request):
+    if request.method == 'GET':
+        indications = IndicationQuotaBillet.objects.filter(actif=True)
+        if is_superadmin(request):
+            indications = IndicationQuotaBillet.objects.all()
+        return success({'indications': IndicationQuotaBilletSerializer(indications, many=True).data})
+
+    if not is_superadmin(request):
+        return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
+
+    data = json_body(request)
+    categorie_billet = data.get('categorie_billet', Invite.CLASSIQUE)
+    nombre_indicatif = int(data.get('nombre_bouteilles_indicatif') or 1)
+    quota_reel = QuotaBillet.objects.filter(
+        categorie_billet=categorie_billet,
+        actif=True,
+    ).first()
+    if quota_reel and nombre_indicatif < quota_reel.nombre_bouteilles:
+        return error(
+            (
+                f"Quota indicatif trop bas pour {quota_reel.get_categorie_billet_display()}. "
+                f"Le quota reel actuel est de {quota_reel.nombre_bouteilles} bouteille(s). "
+                f"Augmentez l'indication ou diminuez d'abord le quota reel."
+            )
+        )
+
+    indication, _ = IndicationQuotaBillet.objects.update_or_create(
+        categorie_billet=categorie_billet,
+        defaults={
+            'titre': data.get('titre', 'Quota indicatif').strip() or 'Quota indicatif',
+            'nombre_bouteilles_indicatif': nombre_indicatif,
+            'description': data.get('description', '').strip(),
+            'actif': bool(data.get('actif', True)),
+        },
+    )
+    return success({'indication': indication_quota_to_dict(indication)}, status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'POST'])

@@ -228,6 +228,13 @@ function ClientSpace({ config, session, onLogout, onError }) {
                         style={{ width: `${quota.utilise + quota.restant ? (quota.utilise / (quota.utilise + quota.restant)) * 100 : 0}%` }}
                       />
                     </div>
+                    {quota.indication_quota && (
+                      <div className="quota-indication">
+                        <span>{quota.indication_quota.titre}</span>
+                        <strong>{quota.indication_quota.nombre_bouteilles_indicatif} bouteille(s)</strong>
+                        {quota.indication_quota.description && <p>{quota.indication_quota.description}</p>}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -406,6 +413,11 @@ function ClientSpace({ config, session, onLogout, onError }) {
         .quota-divider { width: 2px; height: 30px; background: #e2e8f0; }
         .quota-progress { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 8px; }
         .quota-progress-bar { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 3px; transition: width .5s ease; }
+        .quota-indication { margin-top: 12px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; color: #4a5568; font-size: 13px; }
+        .quota-indication span, .quota-indication strong { display: block; }
+        .quota-indication span { color: #a0aec0; font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+        .quota-indication strong { color: #2d3748; margin-top: 2px; }
+        .quota-indication p { margin: 6px 0 0; color: #718096; line-height: 1.35; }
         .cart-summary { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 12px; }
         .order-btn, .add-btn { border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .2s, opacity .2s; }
         .order-btn { width: 100%; padding: 12px; border-radius: 12px; }

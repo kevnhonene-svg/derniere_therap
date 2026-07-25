@@ -25,16 +25,24 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
   const [invites, setInvites] = useState([])
   const [boissons, setBoissons] = useState([])
   const [quotas, setQuotas] = useState([])
+  const [indicationsQuotas, setIndicationsQuotas] = useState([])
   const [loading, setLoading] = useState(false)
 
   const load = async () => {
     setLoading(true)
     try {
-      const [tableData, inviteData, drinkData, quotaData] = await Promise.all([api.tables(), api.invites(), api.boissonsAdmin(), api.quotas()])
+      const [tableData, inviteData, drinkData, quotaData, indicationQuotaData] = await Promise.all([
+        api.tables(),
+        api.invites(),
+        api.boissonsAdmin(),
+        api.quotas(),
+        api.indicationsQuotas(),
+      ])
       setTables(tableData.tables)
       setInvites(inviteData.invites)
       setBoissons(drinkData.boissons)
       setQuotas(quotaData.quotas)
+      setIndicationsQuotas(indicationQuotaData.indications)
     } finally {
       setLoading(false)
     }
@@ -122,7 +130,7 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}
             {tab === 'boissons' && <BoissonAdmin boissons={boissons} reload={load} onError={onError} />}
-            {tab === 'quotas' && <QuotaAdmin quotas={quotas} reload={load} onError={onError} />}
+            {tab === 'quotas' && <QuotaAdmin quotas={quotas} indicationsQuotas={indicationsQuotas} reload={load} onError={onError} />}
             {tab === 'statistiques' && <AdminStatsExport tables={tables} invites={invites} boissons={boissons} quotas={quotas} onError={onError} />}
             {tab === 'configuration' && <ConfigAdmin config={config} setConfig={setConfig} onError={onError} />}
           </div>

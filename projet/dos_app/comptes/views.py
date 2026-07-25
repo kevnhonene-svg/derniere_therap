@@ -132,7 +132,7 @@ def tables_admin(request):
     return success({'table': table_to_dict(table)}, status.HTTP_201_CREATED)
 
 
-@api_view(['PATCH'])
+@api_view(['PATCH', 'DELETE'])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def table_admin_detail(request, table_id):
@@ -143,6 +143,18 @@ def table_admin_detail(request, table_id):
         table = TableGala.objects.get(pk=table_id)
     except TableGala.DoesNotExist:
         return error('Table introuvable.', status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        if table.invites.exists():
+            return error(
+                (
+                    f"La table {table.nom} contient encore {table.places_occupees} invite(s). "
+                    "Retirez ou deplacez les invites avant de supprimer cette table."
+                )
+            )
+        nom = table.nom
+        table.delete()
+        return success({'message': f'Table {nom} supprimee.'})
 
     serializer = TableGalaSerializer(table, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)

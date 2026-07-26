@@ -289,10 +289,6 @@ function ClientSpace({ config, session, onLogout, onError }) {
                         <h3 className="drink-name">{boisson.nom}</h3>
                         <p className="drink-description">{boisson.description || boisson.categorie}</p>
                         <div className="drink-footer">
-                          <div className="drink-stock">
-                            <Package size={16} />
-                            <span>Stock: {boisson.quantite_stock}</span>
-                          </div>
                           <div className="drink-actions">
                             {inCart > 0 && <button type="button" onClick={() => remove(boisson.id)} className="qty-btn remove"><XCircle size={20} /></button>}
                             <span className="qty-display">{inCart > 0 && inCart}</span>
@@ -330,7 +326,7 @@ function ClientSpace({ config, session, onLogout, onError }) {
                     <div className="cart-line-icon">{getDrinkIcon(boisson.categorie)}</div>
                     <div>
                       <strong>{boisson.nom}</strong>
-                      <span>{boisson.categorie || 'Boisson'} - stock {boisson.quantite_stock}</span>
+                      <span>{boisson.categorie || 'Boisson'}</span>
                     </div>
                     <div className="cart-line-actions">
                       <button type="button" className="qty-btn remove" onClick={() => remove(boisson.id)}><XCircle size={20} /></button>

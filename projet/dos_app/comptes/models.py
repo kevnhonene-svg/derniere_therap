@@ -38,7 +38,7 @@ class TableGala(models.Model):
 
     @property
     def places_occupees(self):
-        return self.invites.count()
+        return sum(invite.places_table for invite in self.invites.all())
 
     @property
     def places_restantes(self):
@@ -91,13 +91,19 @@ class Invite(models.Model):
     def nom_complet(self):
         return ' '.join(part for part in [self.nom, self.postnom, self.prenom] if part)
 
+    @property
+    def places_table(self):
+        if self.categorie_billet in [self.VIP_COUPLE, self.VIP_PREMIUM]:
+            return 2
+        return 1
+
     def clean(self):
         from django.core.exceptions import ValidationError
 
         if self.table:
-            places_occupees = self.table.invites.exclude(pk=self.pk).count()
-            if places_occupees >= self.table.nombre_places:
-                raise ValidationError({'table': 'Cette table est deja pleine.'})
+            places_occupees = sum(invite.places_table for invite in self.table.invites.exclude(pk=self.pk))
+            if places_occupees + self.places_table > self.table.nombre_places:
+                raise ValidationError({'table': 'Cette table n a pas assez de places disponibles pour ce type de billet.'})
 
     def __str__(self):
         return f'{self.nom_complet} - {self.get_categorie_billet_display()}'

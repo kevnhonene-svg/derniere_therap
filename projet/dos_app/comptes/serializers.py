@@ -11,6 +11,13 @@ class TableGalaSerializer(serializers.ModelSerializer):
         model = TableGala
         fields = ['id', 'nom', 'nombre_places', 'places_occupees', 'places_restantes', 'est_pleine', 'active']
 
+    def validate_nombre_places(self, value):
+        if self.instance and value < self.instance.places_occupees:
+            raise serializers.ValidationError(
+                f'Cette table a deja {self.instance.places_occupees} place(s) occupee(s).'
+            )
+        return value
+
 
 class InviteSerializer(serializers.ModelSerializer):
     nom_complet = serializers.CharField(read_only=True)

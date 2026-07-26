@@ -40,6 +40,16 @@ function App() {
     return () => window.removeEventListener('session-expired', expireSession)
   }, [])
 
+  useEffect(() => {
+    if (!error) return undefined
+
+    const timer = window.setTimeout(() => {
+      setError('')
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [error])
+
   const logout = async () => {
     await api.logout()
     setSession({ role: 'anonymous' })

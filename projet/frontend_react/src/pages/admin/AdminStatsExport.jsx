@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BarChart3, Download, FileSpreadsheet, Filter } from 'lucide-react'
+import { BarChart3, Download, FileSpreadsheet, Filter, Grid3X3 } from 'lucide-react'
 import { categories } from '../../constants'
 import { api } from '../../services/api'
 
@@ -21,6 +21,7 @@ const statusOptions = [
 
 function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
   const [exporting, setExporting] = useState(false)
+  const [exportingTables, setExportingTables] = useState(false)
   const [filters, setFilters] = useState({
     module: 'all',
     search: '',
@@ -69,6 +70,17 @@ function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
     }
   }
 
+  const exportTablePlan = async () => {
+    setExportingTables(true)
+    try {
+      await api.exportRepartitionTables()
+    } catch (err) {
+      onError(err.message)
+    } finally {
+      setExportingTables(false)
+    }
+  }
+
   return (
     <section className="admin-panel export-panel">
       <div className="admin-panel-head">
@@ -87,6 +99,18 @@ function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
             <small>{stat.detail}</small>
           </article>
         ))}
+      </div>
+
+      <div className="table-plan-export">
+        <div>
+          <span className="admin-kicker">Plan de salle</span>
+          <h2>Repartition des tables</h2>
+          <p>Generez un fichier separe avec chaque table, ses codes billets, ses occupants et les places restantes.</p>
+        </div>
+        <button className="admin-primary" type="button" onClick={exportTablePlan} disabled={exportingTables}>
+          {exportingTables ? <BarChart3 size={18} /> : <Grid3X3 size={18} />}
+          <span>{exportingTables ? 'Generation...' : 'Exporter tables'}</span>
+        </button>
       </div>
 
       <form className="export-form" onSubmit={submit}>

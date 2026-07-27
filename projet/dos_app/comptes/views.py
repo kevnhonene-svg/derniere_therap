@@ -640,3 +640,162 @@ def export_xlsx(request):
     response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def export_repartition_tables(request):
+    if not is_superadmin(request):
+        return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    config, _ = ConfigurationApplication.objects.get_or_create(pk=1)
+    tables = TableGala.objects.prefetch_related('invites').order_by('nom')
+    invites_sans_table = Invite.objects.filter(table__isnull=True).order_by('nom', 'postnom', 'prenom')
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Repartition tables'
+
+    title_fill = PatternFill('solid', fgColor='183C34')
+    table_fill = PatternFill('solid', fgColor='B89435')
+    soft_fill = PatternFill('solid', fgColor='F8F4EA')
+    warning_fill = PatternFill('solid', fgColor='FCECEC')
+    header_fill = PatternFill('solid', fgColor='EAF4EF')
+    thin_border = Border(
+        left=Side(style='thin', color='D3C7B2'),
+        right=Side(style='thin', color='D3C7B2'),
+        top=Side(style='thin', color='D3C7B2'),
+        bottom=Side(style='thin', color='D3C7B2'),
+    )
+
+    columns = ['Code billet', 'Nom complet', 'Type billet', 'Places', 'Telephone']
+    for col in range(1, 7):
+        ws.column_dimensions[get_column_letter(col)].width = [18, 30, 24, 12, 18, 18][col - 1]
+
+    ws.merge_cells('A1:F1')
+    ws.merge_cells('A2:F2')
+    ws.merge_cells('A3:F3')
+    ws['A1'] = config.nom_application
+    ws['A2'] = config.nom_evenement
+    ws['A3'] = 'Repartition professionnelle des tables'
+    for row in range(1, 4):
+        cell = ws.cell(row=row, column=1)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.font = Font(color='FFFFFF' if row < 3 else '183C34', bold=True, size=16 if row == 1 else 12)
+        cell.fill = title_fill if row < 3 else header_fill
+        ws.row_dimensions[row].height = 24
+
+    current_row = 5
+    total_tables = 0
+    total_places = 0
+    total_occupees = 0
+
+    for table in tables:
+        occupants = sorted(table.invites.all(), key=lambda invite: invite.nom_complet.lower())
+        total_tables += 1
+        total_places += table.nombre_places
+        total_occupees += table.places_occupees
+
+        ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=6)
+        title_cell = ws.cell(row=current_row, column=1)
+        title_cell.value = (
+            f'{table.nom} | Places: {table.nombre_places} | '
+            f'Occupees: {table.places_occupees} | Restantes: {table.places_restantes}'
+        )
+        title_cell.fill = table_fill if table.active else warning_fill
+        title_cell.font = Font(color='FFFFFF' if table.active else '7A1F1F', bold=True, size=12)
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+        current_row += 1
+
+        for index, column in enumerate(columns, start=1):
+            cell = ws.cell(row=current_row, column=index)
+            cell.value = column
+            cell.fill = header_fill
+            cell.font = Font(color='183C34', bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+        current_row += 1
+
+        if occupants:
+            for invite in occupants:
+                values = [
+                    invite.code_billet,
+                    invite.nom_complet,
+                    invite.get_categorie_billet_display(),
+                    invite.places_table,
+                    invite.telephone,
+                ]
+                for index, value in enumerate(values, start=1):
+                    cell = ws.cell(row=current_row, column=index)
+                    cell.value = value
+                    cell.fill = soft_fill
+                    cell.border = thin_border
+                    cell.alignment = Alignment(vertical='top', wrap_text=True)
+                current_row += 1
+        else:
+            ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=6)
+            cell = ws.cell(row=current_row, column=1)
+            cell.value = 'Aucun invite affecte a cette table.'
+            cell.fill = soft_fill
+            cell.font = Font(color='695B43', italic=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+            current_row += 1
+
+        current_row += 1
+
+    if invites_sans_table.exists():
+        ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=6)
+        cell = ws.cell(row=current_row, column=1)
+        cell.value = f'INVITES SANS TABLE | Total: {invites_sans_table.count()}'
+        cell.fill = warning_fill
+        cell.font = Font(color='7A1F1F', bold=True, size=12)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        current_row += 1
+
+        for index, column in enumerate(columns, start=1):
+            cell = ws.cell(row=current_row, column=index)
+            cell.value = column
+            cell.fill = header_fill
+            cell.font = Font(color='183C34', bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+        current_row += 1
+
+        for invite in invites_sans_table:
+            values = [
+                invite.code_billet,
+                invite.nom_complet,
+                invite.get_categorie_billet_display(),
+                invite.places_table,
+                invite.telephone,
+            ]
+            for index, value in enumerate(values, start=1):
+                cell = ws.cell(row=current_row, column=index)
+                cell.value = value
+                cell.fill = warning_fill
+                cell.border = thin_border
+                cell.alignment = Alignment(vertical='top', wrap_text=True)
+            current_row += 1
+
+    ws.merge_cells('A4:F4')
+    ws['A4'] = (
+        f'Tables: {total_tables} | Places disponibles: {total_places} | '
+        f'Places occupees: {total_occupees} | Places restantes: {max(total_places - total_occupees, 0)}'
+    )
+    ws['A4'].fill = soft_fill
+    ws['A4'].font = Font(color='183C34', bold=True)
+    ws['A4'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.freeze_panes = 'A6'
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="repartition_tables.xlsx"'
+    return response

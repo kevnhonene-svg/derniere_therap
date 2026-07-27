@@ -1622,6 +1622,37 @@ textarea {
   font-weight: 750;
 }
 
+.table-plan-export {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #d9ccb3;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #fbf7eb 100%);
+  padding: 16px;
+  box-shadow: 0 10px 26px rgba(33, 38, 34, 0.06);
+}
+
+.table-plan-export h2 {
+  margin: 4px 0 6px;
+  color: #183c34;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.table-plan-export p {
+  margin: 0;
+  color: #695b43;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.table-plan-export button {
+  flex: 0 0 auto;
+}
+
 .export-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1822,6 +1853,11 @@ textarea {
   .export-stats,
   .export-form {
     grid-template-columns: 1fr;
+  }
+
+  .table-plan-export {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .export-actions {

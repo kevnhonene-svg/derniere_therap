@@ -56,6 +56,7 @@ export const api = {
   deleteInvite: (id) => request(`/comptes/invites/${id}/`, { method: 'DELETE', body: {} }),
   saveConfig: (payload) => request('/comptes/configuration/admin/', { method: 'POST', body: payload }),
   exportXlsx: (params) => download(`/comptes/exports/xlsx/?${params.toString()}`),
+  exportRepartitionTables: () => download('/comptes/exports/repartition-tables/', 'repartition_tables.xlsx'),
   boissons: (q = '') => request(`/stock/boissons/${q ? `?q=${encodeURIComponent(q)}` : ''}`),
   boissonsAdmin: () => request('/stock/boissons/admin/'),
   createBoisson: (formData) => request('/stock/boissons/admin/', { method: 'POST', body: formData }),

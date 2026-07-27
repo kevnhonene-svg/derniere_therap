@@ -5,6 +5,7 @@ urlpatterns = [
     path('configuration/', views.configuration, name='configuration'),
     path('configuration/admin/', views.configuration_admin, name='configuration_admin'),
     path('exports/xlsx/', views.export_xlsx, name='export_xlsx'),
+    path('exports/repartition-tables/', views.export_repartition_tables, name='export_repartition_tables'),
     path('login-billet/', views.login_billet, name='login_billet'),
     path('login-admin/', views.login_admin, name='login_admin'),
     path('logout/', views.logout_view, name='logout'),

@@ -6,6 +6,7 @@ function ValidationBilletAdmin({ onError }) {
   const [code, setCode] = useState('')
   const [result, setResult] = useState(null)
   const [message, setMessage] = useState('')
+  const [alertMessage, setAlertMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [validating, setValidating] = useState(false)
 
@@ -14,12 +15,13 @@ function ValidationBilletAdmin({ onError }) {
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
     setLoading(true)
     setMessage('')
+    setAlertMessage('')
     try {
       const data = await api.rechercherBillet(code.trim())
       setResult(data)
     } catch (err) {
       setResult(null)
-      onError(err.message)
+      setAlertMessage(err.message)
     } finally {
       setLoading(false)
     }
@@ -29,13 +31,14 @@ function ValidationBilletAdmin({ onError }) {
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
     setValidating(true)
     setMessage('')
+    setAlertMessage('')
     try {
       const data = await api.validerBillet({ code_billet: code.trim() })
       setResult(data)
       setMessage(data.message || 'Billet valide avec succes.')
       onError(data.message || 'Billet valide avec succes.')
     } catch (err) {
-      onError(err.message)
+      setAlertMessage(err.message)
     } finally {
       setValidating(false)
     }
@@ -119,6 +122,17 @@ function ValidationBilletAdmin({ onError }) {
             {validating ? <span className="spinner" /> : <UserCheck size={20} />}
             {validating ? 'Validation...' : 'Valider la personne'}
           </button>
+        </div>
+      )}
+
+      {alertMessage && (
+        <div className="modal">
+          <div className="modal-box admin-alert-modal ticket-alert-modal">
+            <button className="close" type="button" onClick={() => setAlertMessage('')}>x</button>
+            <h2>Validation refusee</h2>
+            <p>{alertMessage}</p>
+            <button type="button" onClick={() => setAlertMessage('')}>Compris</button>
+          </div>
         </div>
       )}
     </section>

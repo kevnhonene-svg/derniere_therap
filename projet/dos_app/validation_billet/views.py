@@ -72,7 +72,13 @@ def valider_billet(request):
 
     try:
         with transaction.atomic():
-            invite = Invite.objects.select_for_update().select_related('table').get(code_billet__iexact=code, actif=True)
+            invite = Invite.objects.select_for_update().get(code_billet__iexact=code, actif=True)
+            if not invite.table_id:
+                return error(
+                    "Validation refusee. Cet invite n'a pas encore de table affectee. "
+                    "Veuillez d'abord lui affecter une table avant de valider son entree."
+                )
+
             validations = ValidationBillet.objects.select_for_update().filter(invite=invite)
             capacite = capacite_billet(invite)
             deja_valide = validations.count()

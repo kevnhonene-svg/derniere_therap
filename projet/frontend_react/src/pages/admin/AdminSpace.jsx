@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ClipboardList, Database, FileSpreadsheet, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
 import Header from '../../components/Header'
 import { api } from '../../services/api'
@@ -29,9 +29,12 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
   const [quotas, setQuotas] = useState([])
   const [indicationsQuotas, setIndicationsQuotas] = useState([])
   const [loading, setLoading] = useState(false)
+  const syncingRef = useRef(false)
 
-  const load = async () => {
-    setLoading(true)
+  const load = async ({ silent = false } = {}) => {
+    if (syncingRef.current) return
+    syncingRef.current = true
+    if (!silent) setLoading(true)
     try {
       const [tableData, inviteData, drinkData, quotaData, indicationQuotaData] = await Promise.all([
         api.tables(),
@@ -46,12 +49,20 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
       setQuotas(quotaData.quotas)
       setIndicationsQuotas(indicationQuotaData.indications)
     } finally {
-      setLoading(false)
+      syncingRef.current = false
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
     load().catch((err) => onError(err.message))
+
+    const interval = window.setInterval(() => {
+      if (document.hidden) return
+      load({ silent: true }).catch(() => {})
+    }, 5000)
+
+    return () => window.clearInterval(interval)
   }, [])
 
   const activeSection = sections.find((section) => section.id === tab) || sections[0]

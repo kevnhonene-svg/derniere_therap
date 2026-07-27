@@ -46,6 +46,7 @@ function ValidationBilletAdmin({ onError }) {
 
   const statusClass = result?.statut === 'utilise' ? 'used' : 'valid'
   const invite = result?.invite
+  const formatProgress = (value) => String(value ?? 0).replace('.', ',')
 
   return (
     <section className="admin-panel validation-panel">
@@ -84,7 +85,7 @@ function ValidationBilletAdmin({ onError }) {
             {result.statut === 'utilise' ? <XCircle size={28} /> : <CheckCircle2 size={28} />}
             <div>
               <strong>{result.statut === 'utilise' ? 'Code totalement utilise' : 'Code valide'}</strong>
-              <span>{result.restant} entree(s) restante(s) sur {result.capacite}</span>
+              <span>{formatProgress(result.restant)} entree(s) restante(s) sur {result.capacite}</span>
             </div>
           </div>
 
@@ -103,7 +104,7 @@ function ValidationBilletAdmin({ onError }) {
             </div>
             <div>
               <span>Validation</span>
-              <strong>{result.deja_valide}/{result.capacite}</strong>
+              <strong>{formatProgress(result.deja_valide)}/{result.capacite}</strong>
             </div>
           </div>
 
@@ -111,7 +112,12 @@ function ValidationBilletAdmin({ onError }) {
             <div className="ticket-validation-history">
               <span>Historique</span>
               {result.validations.map((item) => (
-                <small key={item.id}>Personne {item.numero_personne} validee le {new Date(item.cree_le).toLocaleString('fr-FR')}</small>
+                <small key={item.id}>
+                  Personne {item.numero_personne}: 1ere validation par {item.valide_par_nom || 'Admin'} le {new Date(item.cree_le).toLocaleString('fr-FR')}
+                  {item.est_complete
+                    ? ` | 2e validation par ${item.confirme_par_nom || 'Admin'} le ${new Date(item.confirme_le).toLocaleString('fr-FR')}`
+                    : ' | En attente du 2e admin'}
+                </small>
               ))}
             </div>
           )}

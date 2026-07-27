@@ -15,6 +15,15 @@ class ValidationBillet(models.Model):
     )
     valide_par_session = models.CharField(max_length=120, blank=True)
     cree_le = models.DateTimeField(auto_now_add=True)
+    confirme_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='confirmations_billets',
+    )
+    confirme_par_session = models.CharField(max_length=120, blank=True)
+    confirme_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-cree_le']
@@ -22,3 +31,7 @@ class ValidationBillet(models.Model):
 
     def __str__(self):
         return f'{self.invite.nom_complet} - entree {self.numero_personne}'
+
+    @property
+    def est_complete(self):
+        return self.confirme_le is not None

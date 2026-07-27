@@ -94,6 +94,23 @@ def quotas_admin(request):
     return success({'quota': quota_to_dict(quota)}, status.HTTP_201_CREATED)
 
 
+@api_view(['DELETE'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def quota_admin_detail(request, quota_id):
+    if not is_superadmin(request):
+        return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
+
+    try:
+        quota = QuotaBillet.objects.get(pk=quota_id)
+    except QuotaBillet.DoesNotExist:
+        return error('Quota introuvable.', status.HTTP_404_NOT_FOUND)
+
+    label = quota.get_categorie_billet_display()
+    quota.delete()
+    return success({'message': f'Quota {label} supprime.'})
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes([])
 @permission_classes([AllowAny])
@@ -133,6 +150,23 @@ def indications_quotas(request):
         },
     )
     return success({'indication': indication_quota_to_dict(indication)}, status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def indication_quota_detail(request, indication_id):
+    if not is_superadmin(request):
+        return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
+
+    try:
+        indication = IndicationQuotaBillet.objects.get(pk=indication_id)
+    except IndicationQuotaBillet.DoesNotExist:
+        return error('Quota indicatif introuvable.', status.HTTP_404_NOT_FOUND)
+
+    label = indication.get_categorie_billet_display()
+    indication.delete()
+    return success({'message': f'Quota indicatif {label} supprime.'})
 
 
 @api_view(['GET', 'POST'])

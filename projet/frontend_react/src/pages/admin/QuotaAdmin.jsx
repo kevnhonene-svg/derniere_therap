@@ -45,6 +45,17 @@ function QuotaAdmin({ quotas, indicationsQuotas = [], reload, onError }) {
     } catch (err) { onError(err.message) }
   }
 
+  const deleteQuota = async (quota) => {
+    const ok = window.confirm(
+      `Voulez-vous vraiment supprimer le quota "${quota.categorie_billet_label}" ?\n\nCette action est definitive.`
+    )
+    if (!ok) return
+    try {
+      await api.deleteQuota(quota.id)
+      await reload()
+    } catch (err) { onError(err.message) }
+  }
+
   const openCreateIndication = () => {
     setEditingIndication(null)
     setIndicationForm({
@@ -82,6 +93,17 @@ function QuotaAdmin({ quotas, indicationsQuotas = [], reload, onError }) {
     } catch (err) { onError(err.message) }
   }
 
+  const deleteIndication = async (indication) => {
+    const ok = window.confirm(
+      `Voulez-vous vraiment supprimer le quota indicatif "${indication.categorie_billet_label}" ?\n\nCette action est definitive.`
+    )
+    if (!ok) return
+    try {
+      await api.deleteIndicationQuota(indication.id)
+      await reload()
+    } catch (err) { onError(err.message) }
+  }
+
   return <>
     <CrudPanel title="Quotas par billet" open={open} setOpen={setOpen} onSubmit={submit} buttonLabel="Definir un quota" formTitle={editingQuota ? 'Modifier quota' : 'Quota billet'} onCreate={openCreate}>
       <div className="modal-fields">
@@ -89,7 +111,7 @@ function QuotaAdmin({ quotas, indicationsQuotas = [], reload, onError }) {
         <label className="field-label">Nombre de bouteilles<input required type="number" min="1" value={form.nombre_bouteilles} onChange={(e) => setForm({ ...form, nombre_bouteilles: e.target.value })} /></label>
         <label className="check-row"><input type="checkbox" checked={form.actif} onChange={(e) => setForm({ ...form, actif: e.target.checked })} /> Quota actif</label>
       </div>
-      <List items={quotas.map((q) => ({ id: q.id, label: q.categorie_billet_label, meta: `${q.nombre_bouteilles} bouteille(s)${q.actif ? '' : ' - inactif'}`, raw: q }))} onEdit={openEdit} />
+      <List items={quotas.map((q) => ({ id: q.id, label: q.categorie_billet_label, meta: `${q.nombre_bouteilles} bouteille(s)${q.actif ? '' : ' - inactif'}`, raw: q }))} onEdit={openEdit} onDelete={deleteQuota} />
     </CrudPanel>
 
     <CrudPanel title="Quotas indicatifs" open={indicationOpen} setOpen={setIndicationOpen} onSubmit={submitIndication} buttonLabel="Definir une indication" formTitle={editingIndication ? 'Modifier indication' : 'Indication quota'} onCreate={openCreateIndication}>
@@ -100,7 +122,7 @@ function QuotaAdmin({ quotas, indicationsQuotas = [], reload, onError }) {
         <label className="field-label">Description<textarea value={indicationForm.description} onChange={(e) => setIndicationForm({ ...indicationForm, description: e.target.value })} /></label>
         <label className="check-row"><input type="checkbox" checked={indicationForm.actif} onChange={(e) => setIndicationForm({ ...indicationForm, actif: e.target.checked })} /> Visible au client</label>
       </div>
-      <List items={indicationsQuotas.map((q) => ({ id: q.id, label: q.categorie_billet_label, meta: `${q.titre}: ${q.nombre_bouteilles_indicatif} bouteille(s)${q.actif ? '' : ' - inactif'}`, raw: q }))} onEdit={openEditIndication} />
+      <List items={indicationsQuotas.map((q) => ({ id: q.id, label: q.categorie_billet_label, meta: `${q.titre}: ${q.nombre_bouteilles_indicatif} bouteille(s)${q.actif ? '' : ' - inactif'}`, raw: q }))} onEdit={openEditIndication} onDelete={deleteIndication} />
     </CrudPanel>
   </>
 }

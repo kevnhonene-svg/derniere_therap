@@ -281,14 +281,27 @@ def add_rank(rows):
     return [{'N°': index, **row} for index, row in enumerate(rows, start=1)]
 
 
-def write_sheet(writer, name, rows, columns, config, filters_text):
+def ticket_totals_summary(invites):
+    totals = {value: 0 for value, _ in Invite.CATEGORIES_BILLET}
+    for invite in invites:
+        totals[invite.categorie_billet] = totals.get(invite.categorie_billet, 0) + 1
+
+    parts = [
+        f'{label}: {totals.get(value, 0)}'
+        for value, label in Invite.CATEGORIES_BILLET
+    ]
+    parts.append(f'Total: {sum(totals.values())}')
+    return 'Totaux billets selon filtre: ' + ' | '.join(parts)
+
+
+def write_sheet(writer, name, rows, columns, config, filters_text, ticket_totals_text):
     import pandas as pd
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
 
     df = pd.DataFrame(rows, columns=columns)
     safe_name = sheet_name(name)
-    startrow = 6
+    startrow = 7
     df.to_excel(writer, sheet_name=safe_name, index=False, startrow=startrow)
     worksheet = writer.sheets[safe_name]
     max_col = max(len(columns), 1)
@@ -312,12 +325,14 @@ def write_sheet(writer, name, rows, columns, config, filters_text):
     worksheet.merge_cells(f'A3:{last_col}3')
     worksheet.merge_cells(f'A4:{last_col}4')
     worksheet.merge_cells(f'A5:{last_col}5')
+    worksheet.merge_cells(f'A6:{last_col}6')
 
     worksheet['A1'] = config.nom_application
     worksheet['A2'] = config.nom_evenement
     worksheet['A3'] = config.sous_titre
     worksheet['A4'] = f'Export: {name}'
     worksheet['A5'] = f'Filtres appliques: {filters_text}'
+    worksheet['A6'] = ticket_totals_text
 
     worksheet['A1'].fill = title_fill
     worksheet['A1'].font = Font(color='FFFFFF', bold=True, size=16)
@@ -329,8 +344,10 @@ def write_sheet(writer, name, rows, columns, config, filters_text):
     worksheet['A4'].font = Font(color='183C34', bold=True)
     worksheet['A5'].fill = subtitle_fill
     worksheet['A5'].font = Font(color='695B43')
+    worksheet['A6'].fill = subtitle_fill
+    worksheet['A6'].font = Font(color='183C34', bold=True)
 
-    for row in range(1, 6):
+    for row in range(1, 7):
         worksheet.row_dimensions[row].height = 22
         worksheet.cell(row=row, column=1).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
@@ -361,11 +378,11 @@ def write_sheet(writer, name, rows, columns, config, filters_text):
             cell.alignment = Alignment(vertical='top', wrap_text=True)
             cell.border = thin_border
 
-    worksheet.freeze_panes = worksheet['A8']
+    worksheet.freeze_panes = worksheet['A9']
     worksheet.auto_filter.ref = f'A{header_row}:{last_col}{worksheet.max_row}'
     for column_index in range(1, max_col + 1):
-        worksheet.cell(row=6, column=column_index).fill = border_fill
-        worksheet.cell(row=6, column=column_index).border = thin_border
+        worksheet.cell(row=7, column=column_index).fill = border_fill
+        worksheet.cell(row=7, column=column_index).border = thin_border
 
     for index, column in enumerate(df.columns, start=1):
         values = [str(column)] + [str(value) for value in df[column].fillna('').tolist()]
@@ -520,6 +537,7 @@ def export_xlsx(request):
         quotas = list(QuotaBillet.objects.all())
         commandes = list(filtered_commandes(request))
         messages = list(filtered_messages(request))
+        ticket_totals_text = ticket_totals_summary(invites)
 
         if module in ['all', 'invites']:
             rows = add_rank([{
@@ -532,7 +550,7 @@ def export_xlsx(request):
                 'Actif': 'Oui' if invite.actif else 'Non',
                 'Cree le': date_text(invite.cree_le),
             } for invite in invites])
-            write_sheet(writer, 'Invites', rows, ['N°', 'Nom complet', 'Telephone', 'Code billet', 'Type billet', 'Table assignee', 'Protocole', 'Actif', 'Cree le'], config, filters_text)
+            write_sheet(writer, 'Invites', rows, ['N°', 'Nom complet', 'Telephone', 'Code billet', 'Type billet', 'Table assignee', 'Protocole', 'Actif', 'Cree le'], config, filters_text, ticket_totals_text)
             generated.append(('Invites', len(rows)))
 
         if module in ['all', 'tables']:
@@ -545,7 +563,7 @@ def export_xlsx(request):
                 'Active': 'Oui' if table.active else 'Non',
                 'Cree le': date_text(table.cree_le),
             } for table in tables])
-            write_sheet(writer, 'Tables', rows, ['N°', 'Table', 'Places', 'Occupees', 'Restantes', 'Pleine', 'Active', 'Cree le'], config, filters_text)
+            write_sheet(writer, 'Tables', rows, ['N°', 'Table', 'Places', 'Occupees', 'Restantes', 'Pleine', 'Active', 'Cree le'], config, filters_text, ticket_totals_text)
             generated.append(('Tables', len(rows)))
 
         if module in ['all', 'boissons']:
@@ -561,7 +579,7 @@ def export_xlsx(request):
                 'Active': 'Oui' if boisson.actif else 'Non',
                 'Cree le': date_text(boisson.cree_le),
             } for boisson in boissons])
-            write_sheet(writer, 'Boissons', rows, ['N°', 'Nom', 'Categorie', 'Description', 'Prix indicatif', 'Stock', 'Seuil alerte', 'Disponible', 'Stock faible', 'Active', 'Cree le'], config, filters_text)
+            write_sheet(writer, 'Boissons', rows, ['N°', 'Nom', 'Categorie', 'Description', 'Prix indicatif', 'Stock', 'Seuil alerte', 'Disponible', 'Stock faible', 'Active', 'Cree le'], config, filters_text, ticket_totals_text)
             generated.append(('Boissons', len(rows)))
 
         if module in ['all', 'quotas']:
@@ -570,7 +588,7 @@ def export_xlsx(request):
                 'Nombre bouteilles': quota.nombre_bouteilles,
                 'Actif': 'Oui' if quota.actif else 'Non',
             } for quota in quotas])
-            write_sheet(writer, 'Quotas', rows, ['N°', 'Type billet', 'Nombre bouteilles', 'Actif'], config, filters_text)
+            write_sheet(writer, 'Quotas', rows, ['N°', 'Type billet', 'Nombre bouteilles', 'Actif'], config, filters_text, ticket_totals_text)
             generated.append(('Quotas', len(rows)))
 
         if module in ['all', 'commandes']:
@@ -586,7 +604,7 @@ def export_xlsx(request):
                 'Cree le': date_text(commande.cree_le),
                 'Mise a jour': date_text(commande.mise_a_jour),
             } for commande in commandes])
-            write_sheet(writer, 'Commandes', rows, ['N°', 'Nom complet', 'Code billet', 'Type billet', 'Table', 'Statut', 'Total bouteilles', 'Note client', 'Note protocole', 'Cree le', 'Mise a jour'], config, filters_text)
+            write_sheet(writer, 'Commandes', rows, ['N°', 'Nom complet', 'Code billet', 'Type billet', 'Table', 'Statut', 'Total bouteilles', 'Note client', 'Note protocole', 'Cree le', 'Mise a jour'], config, filters_text, ticket_totals_text)
             ligne_rows = []
             for commande in commandes:
                 for ligne in commande.lignes.all():
@@ -599,7 +617,7 @@ def export_xlsx(request):
                         'Statut commande': commande.get_statut_display(),
                     })
             ligne_rows = add_rank(ligne_rows)
-            write_sheet(writer, 'Details commandes', ligne_rows, ['N°', 'Commande ID', 'Invite', 'Boisson', 'Categorie boisson', 'Quantite', 'Statut commande'], config, filters_text)
+            write_sheet(writer, 'Details commandes', ligne_rows, ['N°', 'Commande ID', 'Invite', 'Boisson', 'Categorie boisson', 'Quantite', 'Statut commande'], config, filters_text, ticket_totals_text)
             generated.append(('Commandes', len(rows)))
 
         if module in ['all', 'messages']:
@@ -611,11 +629,11 @@ def export_xlsx(request):
                 'Lu': 'Oui' if message.lu else 'Non',
                 'Cree le': date_text(message.cree_le),
             } for message in messages])
-            write_sheet(writer, 'Messages', rows, ['N°', 'Nom complet', 'Code billet', 'Table', 'Auteur', 'Lu', 'Cree le'], config, filters_text)
+            write_sheet(writer, 'Messages', rows, ['N°', 'Nom complet', 'Code billet', 'Table', 'Auteur', 'Lu', 'Cree le'], config, filters_text, ticket_totals_text)
             generated.append(('Messages', len(rows)))
 
         summary_rows = add_rank([{'Feuille': name, 'Lignes exportees': count} for name, count in generated])
-        write_sheet(writer, 'Resume', summary_rows, ['N°', 'Feuille', 'Lignes exportees'], config, filters_text)
+        write_sheet(writer, 'Resume', summary_rows, ['N°', 'Feuille', 'Lignes exportees'], config, filters_text, ticket_totals_text)
 
     output.seek(0)
     filename = f"export_admin_{module}.xlsx"

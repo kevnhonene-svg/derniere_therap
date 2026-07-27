@@ -19,10 +19,16 @@ class TableGalaSerializer(serializers.ModelSerializer):
         return value
 
 
+class TableGalaInviteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TableGala
+        fields = ['id', 'nom', 'nombre_places', 'active']
+
+
 class InviteSerializer(serializers.ModelSerializer):
     nom_complet = serializers.CharField(read_only=True)
     categorie_billet_label = serializers.CharField(source='get_categorie_billet_display', read_only=True)
-    table = TableGalaSerializer(read_only=True)
+    table = TableGalaInviteSerializer(read_only=True)
     table_id = serializers.PrimaryKeyRelatedField(
         queryset=TableGala.objects.all(),
         source='table',

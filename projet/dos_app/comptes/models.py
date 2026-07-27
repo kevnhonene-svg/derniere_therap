@@ -39,7 +39,18 @@ class TableGala(models.Model):
 
     @property
     def places_occupees(self):
-        return sum(invite.places_table for invite in self.invites.all())
+        return self.invites.aggregate(
+            total=models.Sum(
+                models.Case(
+                    models.When(
+                        categorie_billet__in=[Invite.VIP_COUPLE, Invite.VIP_PREMIUM],
+                        then=models.Value(2),
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
+            )
+        )['total'] or 0
 
     @property
     def places_restantes(self):
@@ -102,7 +113,18 @@ class Invite(models.Model):
         from django.core.exceptions import ValidationError
 
         if self.table:
-            places_occupees = sum(invite.places_table for invite in self.table.invites.exclude(pk=self.pk))
+            places_occupees = self.table.invites.exclude(pk=self.pk).aggregate(
+                total=models.Sum(
+                    models.Case(
+                        models.When(
+                            categorie_billet__in=[self.VIP_COUPLE, self.VIP_PREMIUM],
+                            then=models.Value(2),
+                        ),
+                        default=models.Value(1),
+                        output_field=models.IntegerField(),
+                    )
+                )
+            )['total'] or 0
             if places_occupees + self.places_table > self.table.nombre_places:
                 raise ValidationError({'table': 'Cette table n a pas assez de places disponibles pour ce type de billet.'})
 

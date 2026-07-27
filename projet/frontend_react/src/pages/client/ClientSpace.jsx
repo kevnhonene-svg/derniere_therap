@@ -347,7 +347,16 @@ function ClientSpace({ config, session, onLogout, onError }) {
                   <h3>Messages en direct avec le service protocolaire</h3>
                   <span className="chat-badge">{unreadProtocolMessages || messages.length}</span>
                 </div>
-                <ChatPanel messages={messages} value={message} setValue={setMessage} send={send} sending={isSending} currentRole={session.role} />
+                <ChatPanel
+                  messages={messages}
+                  value={message}
+                  setValue={setMessage}
+                  send={send}
+                  sending={isSending}
+                  currentRole={session.role}
+                  sendingDisabled={config.messages_clients_actifs === false}
+                  disabledMessage="L'envoi de messages sera active lorsque vous serez dans la salle de fete."
+                />
               </div>
             </section>
           )}

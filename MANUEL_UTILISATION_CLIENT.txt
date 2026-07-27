@@ -1,0 +1,101 @@
+MANUEL BREF D'UTILISATION - COTE CLIENT
+APPLICATION DE GESTION DU GALA DOCTORAT
+
+
+DEDICACE
+
+Ce manuel est dedie a toutes les personnes qui ont contribue, chacune a sa maniere, a la realisation de cette application.
+
+A Dr NDJOKO KAWEMA, pour l'accompagnement, la motivation et l'esprit de responsabilite apporte au projet.
+
+A Dr KRISHNA MEYA, pour le soutien, les idees et l'encouragement durant l'evolution du travail.
+
+A Dr CANTIN MBE, pour la disponibilite, les orientations et la contribution a l'organisation du projet.
+
+A Dr LESLIE FEZE, pour l'attention, les conseils et la participation a la reussite de cette initiative.
+
+A Dr ZOLA LUMIERE, pour l'inspiration, l'engagement et l'appui moral dans la realisation de l'application.
+
+A Dr NGANZI KAMBU, pour le soutien, la collaboration et la volonte de voir ce projet aboutir.
+
+A Dr MEMLEM, pour les encouragements, la presence et la contribution a l'esprit collectif.
+
+A Dr ARDI, pour l'appui, les observations utiles et l'accompagnement pendant le developpement.
+
+A toute la promotion, composee de docteurs, pour l'unite, la collaboration et la participation a cette belle oeuvre commune.
+
+
+1. ACCES A L'APPLICATION
+
+Le client ouvre le lien de l'application. La premiere page demande le code billet.
+
+Le code billet sert a identifier l'invite et a lui donner acces a son espace personnel.
+
+
+2. CONNEXION DU CLIENT
+
+Le client entre son code billet dans le champ de connexion, puis valide.
+
+Si le code existe, l'application ouvre directement l'espace client.
+
+Si le code est incorrect, un message s'affiche pour signaler que le code billet est invalide.
+
+
+3. ACCUEIL CLIENT
+
+Apres connexion, le client voit un petit tableau de bord.
+
+Cette page lui permet de connaitre son type de billet, son quota restant et les boissons deja utilisees.
+
+
+4. COMMANDE DES BOISSONS
+
+Le client ouvre la section Boissons pour choisir les boissons disponibles.
+
+Il peut rechercher une boisson avec la barre de recherche, puis cliquer sur Ajouter.
+
+L'application empeche automatiquement de depasser le quota autorise.
+
+
+5. PANIER
+
+Le panier contient les boissons selectionnees avant l'envoi de la commande.
+
+Le client peut verifier sa selection, retirer une boisson ou confirmer la commande.
+
+Apres confirmation, la commande est envoyee au service concerne.
+
+
+6. QUOTA
+
+Le quota depend du type de billet.
+
+L'application affiche le nombre de bouteilles restantes et le nombre deja utilise.
+
+Quand le quota est atteint, le client ne peut plus ajouter une nouvelle boisson.
+
+
+7. MESSAGES
+
+La section Messages permet au client d'ecrire au service protocolaire.
+
+Les messages s'affichent sous forme de conversation simple et professionnelle.
+
+
+8. DECONNEXION
+
+Le client peut quitter son espace en cliquant sur Sortir.
+
+Apres la deconnexion, l'application revient a la page de connexion par code billet.
+
+
+9. REGLES IMPORTANTES
+
+Le code billet est personnel.
+
+Le client doit respecter son quota de boissons.
+
+En cas de probleme, il peut contacter le service protocolaire dans la section Messages.
+
+
+FIN DU MANUEL

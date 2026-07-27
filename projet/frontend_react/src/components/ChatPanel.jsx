@@ -1,7 +1,18 @@
 import { useMemo } from 'react'
 import { ArrowLeft, CheckCheck, Send } from 'lucide-react'
 
-function ChatPanel({ messages, value, setValue, send, selectedInvite, setSelectedInvite, sending = false, currentRole = 'client' }) {
+function ChatPanel({
+  messages,
+  value,
+  setValue,
+  send,
+  selectedInvite,
+  setSelectedInvite,
+  sending = false,
+  currentRole = 'client',
+  sendingDisabled = false,
+  disabledMessage = '',
+}) {
   const hasConversationList = Boolean(setSelectedInvite)
   const conversations = useMemo(() => {
     const grouped = new Map()
@@ -107,9 +118,10 @@ function ChatPanel({ messages, value, setValue, send, selectedInvite, setSelecte
               )
             })}
           </div>
+          {sendingDisabled && <div className="chat-locked">{disabledMessage || "L'envoi de messages est momentanement bloque."}</div>}
           <form className="chat-send" onSubmit={submit}>
-            <input disabled={sending} value={value} onChange={(e) => setValue(e.target.value)} placeholder="Message" />
-            <button className="chat-send-button loading-button" type="submit" disabled={sending || !value.trim()} aria-label="Envoyer le message">
+            <input disabled={sending || sendingDisabled} value={value} onChange={(e) => setValue(e.target.value)} placeholder={sendingDisabled ? 'Messages bloques par administration' : 'Message'} />
+            <button className="chat-send-button loading-button" type="submit" disabled={sendingDisabled || sending || !value.trim()} aria-label="Envoyer le message">
               {sending && <span className="spinner" />}
               {!sending && <Send size={20} fill="currentColor" />}
             </button>

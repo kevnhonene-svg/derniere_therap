@@ -17,6 +17,7 @@ class ConfigurationApplication(models.Model):
             "la limite de votre categorie, puis suivez l'etat de votre commande."
         )
     )
+    messages_clients_actifs = models.BooleanField(default=True)
     mise_a_jour = models.DateTimeField(auto_now=True)
 
     class Meta:

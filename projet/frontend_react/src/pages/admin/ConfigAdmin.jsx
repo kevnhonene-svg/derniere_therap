@@ -21,6 +21,7 @@ function ConfigAdmin({ config, setConfig, onError }) {
       <label className="field-label">Nom de l evenement<input required value={form.nom_evenement || ''} onChange={(e) => setForm({ ...form, nom_evenement: e.target.value })} /></label>
       <label className="field-label field-wide">Sous-titre<input value={form.sous_titre || ''} onChange={(e) => setForm({ ...form, sous_titre: e.target.value })} /></label>
       <label className="field-label field-wide">Notice client<textarea value={form.notice_client || ''} onChange={(e) => setForm({ ...form, notice_client: e.target.value })} /></label>
+      <label className="check-row"><input type="checkbox" checked={form.messages_clients_actifs !== false} onChange={(e) => setForm({ ...form, messages_clients_actifs: e.target.checked })} /> Autoriser l'envoi des messages cote client</label>
     </div>
   </CrudPanel>
 }

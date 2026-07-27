@@ -43,7 +43,7 @@ class InviteSerializer(serializers.ModelSerializer):
 class ConfigurationApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfigurationApplication
-        fields = ['nom_application', 'nom_evenement', 'sous_titre', 'notice_client']
+        fields = ['nom_application', 'nom_evenement', 'sous_titre', 'notice_client', 'messages_clients_actifs']
 
 
 def table_to_dict(table):

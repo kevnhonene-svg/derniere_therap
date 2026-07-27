@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
-from dos_app.comptes.models import Invite
+from dos_app.comptes.models import ConfigurationApplication, Invite
 from dos_app.comptes.utils import current_invite_id, error, json_body, protocol_or_admin, success
 from dos_app.message.models import MessageConversation
 from dos_app.message.serializers import MessageConversationSerializer, message_to_dict
@@ -43,6 +43,9 @@ def messages(request):
         invite = Invite.objects.get(pk=cible_id)
         auteur = MessageConversation.PROTOCOLE
     elif invite_id:
+        config, _ = ConfigurationApplication.objects.get_or_create(pk=1)
+        if not config.messages_clients_actifs:
+            return error("L'envoi de messages est momentanement bloque par l'administration.")
         invite = Invite.objects.get(pk=invite_id)
         auteur = MessageConversation.CLIENT
     else:

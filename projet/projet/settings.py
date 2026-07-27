@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'dos_app.stock',
     'dos_app.commande',
     'dos_app.message',
+    'dos_app.validation_billet',
 ]
 
 MIDDLEWARE = [

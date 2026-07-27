@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/stock/', include('dos_app.stock.urls')),
     path('api/commandes/', include('dos_app.commande.urls')),
     path('api/messages/', include('dos_app.message.urls')),
+    path('api/validation-billets/', include('dos_app.validation_billet.urls')),
 ]
 
 if settings.DEBUG:

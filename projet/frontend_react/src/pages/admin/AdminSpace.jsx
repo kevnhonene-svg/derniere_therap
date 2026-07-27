@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
-import { ClipboardList, Database, FileSpreadsheet, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, Users, Wine } from 'lucide-react'
+import { ClipboardList, Database, FileSpreadsheet, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
 import Header from '../../components/Header'
 import { api } from '../../services/api'
 import AdminStatsExport from './AdminStatsExport'
@@ -9,8 +9,10 @@ import ConfigAdmin from './ConfigAdmin'
 import InviteAdmin from './InviteAdmin'
 import QuotaAdmin from './QuotaAdmin'
 import TableAdmin from './TableAdmin'
+import ValidationBilletAdmin from './ValidationBilletAdmin'
 
 const sections = [
+  { id: 'validation', label: 'Validation', hint: 'Controle des billets', icon: TicketCheck },
   { id: 'invites', label: 'Invites', hint: 'Billets, tables et acces', icon: Users },
   { id: 'tables', label: 'Tables', hint: 'Occupation et placement', icon: Grid3X3 },
   { id: 'boissons', label: 'Boissons', hint: 'Stock et categories', icon: Wine },
@@ -127,6 +129,7 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
               </div>
               <span className="admin-status-pill">{activeSection.hint}</span>
             </div>
+            {tab === 'validation' && <ValidationBilletAdmin onError={onError} />}
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}
             {tab === 'boissons' && <BoissonAdmin boissons={boissons} reload={load} onError={onError} />}

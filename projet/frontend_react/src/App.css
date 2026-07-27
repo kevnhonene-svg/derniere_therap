@@ -193,6 +193,158 @@ textarea {
   line-height: 1.45;
 }
 
+.validation-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.ticket-validation-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.ticket-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.ticket-input-wrap svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  color: #8a7b62;
+  transform: translateY(-50%);
+}
+
+.ticket-input-wrap input {
+  height: 50px;
+  padding-left: 44px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ticket-empty-state,
+.ticket-validation-card {
+  border: 1px solid #ded6c5;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.ticket-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 190px;
+  color: #695b43;
+  text-align: center;
+}
+
+.ticket-empty-state strong,
+.ticket-empty-state span {
+  display: block;
+}
+
+.ticket-validation-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  box-shadow: 0 14px 34px rgba(29, 35, 32, 0.08);
+}
+
+.ticket-validation-card.valid {
+  border-left: 6px solid #237a57;
+}
+
+.ticket-validation-card.used {
+  border-left: 6px solid #8b2d2d;
+}
+
+.ticket-validation-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticket-validation-status svg {
+  color: #237a57;
+}
+
+.ticket-validation-card.used .ticket-validation-status svg {
+  color: #8b2d2d;
+}
+
+.ticket-validation-status strong,
+.ticket-validation-status span,
+.ticket-guest-grid span,
+.ticket-guest-grid strong {
+  display: block;
+}
+
+.ticket-validation-status strong {
+  font-size: 20px;
+}
+
+.ticket-validation-status span,
+.ticket-guest-grid span,
+.ticket-validation-history span {
+  color: #695b43;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ticket-guest-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ticket-guest-grid div {
+  min-width: 0;
+  border: 1px solid #ebe3d4;
+  border-radius: 8px;
+  background: #f8f4ea;
+  padding: 12px;
+}
+
+.ticket-guest-grid strong {
+  overflow: hidden;
+  margin-top: 4px;
+  color: #1d2320;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-validation-history {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid #ebe3d4;
+  padding-top: 12px;
+}
+
+.ticket-validation-history small {
+  color: #4d594f;
+}
+
+.ticket-validation-message {
+  border: 1px solid #b8d7c7;
+  border-radius: 8px;
+  background: #edf8f2;
+  color: #1d6a4a;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.ticket-validate-button {
+  justify-self: start;
+  min-width: 240px;
+  background: #237a57;
+}
+
 .close {
   position: absolute;
   top: 10px;
@@ -1550,6 +1702,15 @@ textarea {
   .work-grid,
   .modal-fields {
     grid-template-columns: 1fr;
+  }
+
+  .ticket-validation-search,
+  .ticket-guest-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-validate-button {
+    width: 100%;
   }
 
   .admin-space {

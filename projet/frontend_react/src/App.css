@@ -154,6 +154,7 @@ textarea {
 
 .modal {
   position: fixed;
+  z-index: 90;
   inset: 0;
   display: grid;
   place-items: center;
@@ -175,6 +176,7 @@ textarea {
   width: min(620px, 100%);
   max-height: min(760px, calc(100vh - 32px));
   overflow: auto;
+  padding-bottom: 14px;
   border: 1px solid rgba(255, 255, 255, 0.38);
   box-shadow: 0 24px 80px rgba(5, 13, 11, 0.34);
 }
@@ -1118,10 +1120,16 @@ textarea {
 }
 
 .modal-actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding-top: 6px;
+  margin: 4px -24px -14px;
+  border-top: 1px solid #e7dfd2;
+  background: rgba(255, 253, 248, 0.96);
+  padding: 14px 24px;
+  backdrop-filter: blur(10px);
 }
 
 .secondary {
@@ -1786,6 +1794,17 @@ textarea {
 
   .admin-content .admin-panel {
     padding: 14px;
+  }
+
+  .modal {
+    align-items: start;
+    overflow-y: auto;
+    padding: 12px 12px 104px;
+  }
+
+  .admin-modal {
+    max-height: calc(100vh - 130px);
+    padding-bottom: 0;
   }
 
   .export-stats,

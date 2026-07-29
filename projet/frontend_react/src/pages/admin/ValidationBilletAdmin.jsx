@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CheckCircle2, Search, Ticket, UserCheck, XCircle } from 'lucide-react'
 import { api } from '../../services/api'
 
-function ValidationBilletAdmin({ onError }) {
+function ValidationBilletAdmin({ invites = [], onError }) {
   const [code, setCode] = useState('')
   const [result, setResult] = useState(null)
   const [message, setMessage] = useState('')
@@ -13,12 +13,27 @@ function ValidationBilletAdmin({ onError }) {
   const search = async (event) => {
     event.preventDefault()
     if (loading) return
-    if (!code.trim()) return onError('Veuillez entrer le code billet.')
+    const cleanCode = code.trim()
+    if (!cleanCode) return onError('Veuillez entrer le code billet.')
     setLoading(true)
     setMessage('')
     setAlertMessage('')
+    const localInvite = invites.find((invite) => invite.code_billet?.toLowerCase() === cleanCode.toLowerCase())
+    if (localInvite) {
+      const capacite = ['vip_couple', 'vip_premium'].includes(localInvite.categorie_billet) ? 2 : 1
+      setResult({
+        invite: localInvite,
+        capacite,
+        deja_valide: 0,
+        restant: capacite,
+        statut: 'valide',
+        validation_en_attente: false,
+        validations_en_attente: 0,
+        validations: [],
+      })
+    }
     try {
-      const data = await api.rechercherBillet(code.trim())
+      const data = await api.rechercherBillet(cleanCode)
       setResult(data)
     } catch (err) {
       setResult(null)
@@ -49,6 +64,22 @@ function ValidationBilletAdmin({ onError }) {
   const statusClass = result?.statut === 'utilise' ? 'used' : 'valid'
   const invite = result?.invite
   const formatProgress = (value) => String(value ?? 0).replace('.', ',')
+  const searchValue = code.trim().toLowerCase()
+  const matchingInvites = useMemo(() => {
+    if (searchValue.length < 2) return []
+    return invites
+      .filter((item) => {
+        const value = [
+          item.code_billet,
+          item.nom_complet,
+          item.telephone,
+          item.table?.nom,
+          item.categorie_billet_label,
+        ].join(' ').toLowerCase()
+        return value.includes(searchValue)
+      })
+      .slice(0, 6)
+  }, [invites, searchValue])
 
   return (
     <section className="admin-panel validation-panel">
@@ -64,7 +95,7 @@ function ValidationBilletAdmin({ onError }) {
           <span>Code billet</span>
           <span className="ticket-input-wrap">
             <Ticket size={20} />
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Entrer ou scanner le code billet" />
+            <input value={code} onChange={(event) => { setCode(event.target.value); setResult(null); setMessage(''); setAlertMessage('') }} placeholder="Entrer ou scanner le code billet" />
             <button className="ticket-search-button" type="submit" disabled={loading}>
               {loading ? <span className="spinner" /> : <Search size={18} />}
               <span>{loading ? '...' : 'Verifier'}</span>
@@ -72,6 +103,18 @@ function ValidationBilletAdmin({ onError }) {
           </span>
         </label>
       </form>
+
+      {matchingInvites.length > 0 && !result && (
+        <div className="ticket-search-suggestions">
+          {matchingInvites.map((item) => (
+            <button type="button" key={item.id} onClick={() => setCode(item.code_billet)}>
+              <strong>{item.code_billet}</strong>
+              <span>{item.nom_complet}</span>
+              <small>{item.table?.nom || 'Sans table'} | {item.categorie_billet_label}</small>
+            </button>
+          ))}
+        </div>
+      )}
 
       {!result && (
         <div className="ticket-empty-state">

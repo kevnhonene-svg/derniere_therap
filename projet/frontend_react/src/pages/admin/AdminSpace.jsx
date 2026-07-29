@@ -140,7 +140,7 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
               </div>
               <span className="admin-status-pill">{activeSection.hint}</span>
             </div>
-            {tab === 'validation' && <ValidationBilletAdmin onError={onError} />}
+            {tab === 'validation' && <ValidationBilletAdmin invites={invites} onError={onError} />}
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}
             {tab === 'boissons' && <BoissonAdmin boissons={boissons} reload={load} onError={onError} />}

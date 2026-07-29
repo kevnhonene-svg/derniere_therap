@@ -262,6 +262,57 @@ textarea {
   font-weight: 900;
 }
 
+.ticket-search-suggestions {
+  display: grid;
+  max-width: 760px;
+  gap: 7px;
+  margin-top: -8px;
+  border: 1px solid #e6decd;
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.82);
+  padding: 8px;
+  box-shadow: 0 12px 30px rgba(33, 38, 34, 0.08);
+}
+
+.ticket-search-suggestions button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid #eee5d6;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d2824;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.ticket-search-suggestions button:hover {
+  border-color: rgba(24, 60, 52, 0.22);
+  background: #eef5f1;
+}
+
+.ticket-search-suggestions strong {
+  color: #183c34;
+  font-size: 13px;
+}
+
+.ticket-search-suggestions span {
+  overflow: hidden;
+  color: #26342e;
+  font-size: 13px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-search-suggestions small {
+  color: #695b43;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .ticket-empty-state,
 .ticket-validation-card {
   border: 1px solid #ded6c5;
@@ -1979,6 +2030,15 @@ textarea {
 
   .ticket-validate-button {
     width: 100%;
+  }
+
+  .ticket-search-suggestions button {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .ticket-search-suggestions small {
+    white-space: normal;
   }
 
   .admin-space {

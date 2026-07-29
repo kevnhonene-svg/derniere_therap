@@ -32,13 +32,14 @@ class PresenceBiometriqueSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_entrees(self, obj):
-        return obj.mouvements.filter(type_mouvement=MouvementPresenceBiometrique.ENTREE).count()
+        return sum(1 for mouvement in obj.mouvements.all() if mouvement.type_mouvement == MouvementPresenceBiometrique.ENTREE)
 
     def get_total_sorties(self, obj):
-        return obj.mouvements.filter(type_mouvement=MouvementPresenceBiometrique.SORTIE).count()
+        return sum(1 for mouvement in obj.mouvements.all() if mouvement.type_mouvement == MouvementPresenceBiometrique.SORTIE)
 
     def get_dernier_mouvement(self, obj):
-        mouvement = obj.mouvements.first()
+        mouvements = list(obj.mouvements.all())
+        mouvement = mouvements[0] if mouvements else None
         return MouvementPresenceBiometriqueSerializer(mouvement).data if mouvement else None
 
 

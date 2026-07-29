@@ -36,10 +36,10 @@ function PresenceBiometriqueAdmin({ onError }) {
     }
   }
 
-  const registerPresence = async () => {
+  const registerInitialExit = async () => {
     try {
       ensureAvailable()
-      setWorking('register')
+      setWorking('scan')
       setMessage('')
       const options = await api.optionsPresenceEnregistrement()
       const credential = await navigator.credentials.create({
@@ -48,8 +48,9 @@ function PresenceBiometriqueAdmin({ onError }) {
       const data = await api.confirmerPresenceEnregistrement({
         credential_id: bufferToBase64Url(credential.rawId),
         nom_appareil: navigator.userAgent.slice(0, 160),
+        sortie_initiale: true,
       })
-      setMessage(`${data.presence.identifiant} enregistre. Statut initial: dans la salle.`)
+      setMessage(data.message || `${data.presence.identifiant}: sortie enregistree.`)
       await load()
     } catch (err) {
       onError(err.message)
@@ -63,6 +64,10 @@ function PresenceBiometriqueAdmin({ onError }) {
       ensureAvailable()
       setWorking('scan')
       setMessage('')
+      if (presences.length === 0) {
+        await registerInitialExit()
+        return
+      }
       const options = await api.optionsPresenceAction()
       const credential = await navigator.credentials.get({
         publicKey: prepareRequestOptions(options.publicKey),
@@ -74,6 +79,10 @@ function PresenceBiometriqueAdmin({ onError }) {
       setMessage(data.message || 'Mouvement enregistre.')
       await load()
     } catch (err) {
+      if (err.name === 'NotAllowedError' || err.message.includes('inconnue') || err.message.includes('Aucune empreinte')) {
+        await registerInitialExit()
+        return
+      }
       onError(err.message)
     } finally {
       setWorking('')
@@ -97,15 +106,10 @@ function PresenceBiometriqueAdmin({ onError }) {
       </div>
 
       <div className="biometric-actions">
-        <button type="button" onClick={registerPresence} disabled={Boolean(working)}>
-          {working === 'register' ? <span className="spinner" /> : <Fingerprint size={24} />}
-          <span>Nouvel enregistrement</span>
-          <small>Cree PRES-0001, PRES-0002... sans lien avec les invites</small>
-        </button>
-        <button type="button" onClick={scanPresence} disabled={Boolean(working) || presences.length === 0}>
+        <button className="biometric-main-action" type="button" onClick={scanPresence} disabled={Boolean(working)}>
           {working === 'scan' ? <span className="spinner" /> : <ShieldCheck size={24} />}
-          <span>Scanner sortie / entree</span>
-          <small>Dans la salle devient sortie, sorti devient entree</small>
+          <span>Scanner empreinte</span>
+          <small>Premiere fois: enregistre et marque sortie. Ensuite: sortie puis entree automatiquement.</small>
         </button>
       </div>
 

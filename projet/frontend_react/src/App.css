@@ -2041,6 +2041,11 @@ textarea {
   background: #237a57;
 }
 
+.biometric-actions .biometric-main-action {
+  grid-column: 1 / -1;
+  background: #237a57;
+}
+
 .biometric-actions button span {
   font-size: 18px;
   font-weight: 900;

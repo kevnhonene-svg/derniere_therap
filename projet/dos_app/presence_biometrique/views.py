@@ -74,7 +74,7 @@ def options_enregistrement(request):
                 'userVerification': 'required',
                 'residentKey': 'preferred',
             },
-            'timeout': 60000,
+            'timeout': 15000,
             'attestation': 'none',
         },
         'identifiant': identifiant,
@@ -102,15 +102,28 @@ def confirmer_enregistrement(request):
         return error('Cette empreinte securisee existe deja dans le registre.')
 
     user, username = admin_identity(request)
+    sortie_initiale = bool(data.get('sortie_initiale'))
     presence = PresenceBiometrique.objects.create(
         identifiant=pending['identifiant'],
         credential_id=credential_id,
         nom_appareil=nom_appareil,
+        statut=PresenceBiometrique.SORTI if sortie_initiale else PresenceBiometrique.DANS_SALLE,
         cree_par=user,
         cree_par_session=username,
     )
+    if sortie_initiale:
+        MouvementPresenceBiometrique.objects.create(
+            presence=presence,
+            type_mouvement=MouvementPresenceBiometrique.SORTIE,
+            admin=user,
+            admin_session=username,
+            nom_appareil=nom_appareil,
+        )
     request._request.session.pop('presence_biometrique_register', None)
-    return success({'presence': presence_to_dict(presence)}, status.HTTP_201_CREATED)
+    return success({
+        'presence': presence_to_dict(presence),
+        'message': f'{presence.identifiant}: premiere empreinte enregistree et sortie marquee.',
+    }, status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
@@ -138,7 +151,7 @@ def options_action(request):
                 for credential_id in credentials
             ],
             'userVerification': 'required',
-            'timeout': 60000,
+            'timeout': 12000,
         },
     })
 

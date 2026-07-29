@@ -71,7 +71,7 @@ function App() {
         <ProtocolSpace config={config} session={session} onLogout={logout} onError={setError} />
       )}
       {session.role === 'superadmin' && (
-        <AdminSpace config={config} setConfig={setConfig} onLogout={logout} onError={setError} />
+        <AdminSpace config={config} session={session} setConfig={setConfig} onLogout={logout} onError={setError} />
       )}
     </main>
   )

@@ -21,7 +21,7 @@ const sections = [
   { id: 'configuration', label: 'Configuration', hint: 'Identite de l evenement', icon: Settings },
 ]
 
-function AdminSpace({ config, setConfig, onLogout, onError }) {
+function AdminSpace({ config, session, setConfig, onLogout, onError }) {
   const [tab, setTab] = useState('invites')
   const [tables, setTables] = useState([])
   const [invites, setInvites] = useState([])
@@ -142,7 +142,7 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
 
   return (
     <>
-      <Header config={config} session={{ user: { username: 'Superadmin' } }} onLogout={onLogout} />
+      <Header config={config} session={session} onLogout={onLogout} />
       <main className="admin-space">
         <section className="admin-hero">
           <div>

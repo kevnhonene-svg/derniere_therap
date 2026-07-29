@@ -44,16 +44,18 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
       gain.connect(audio.destination)
       gain.gain.setValueAtTime(0.0001, audio.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.2, audio.currentTime + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.18)
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 2.6)
 
-      const oscillator = audio.createOscillator()
-      oscillator.type = 'triangle'
-      oscillator.frequency.setValueAtTime(920, audio.currentTime)
-      oscillator.frequency.exponentialRampToValueAtTime(680, audio.currentTime + 0.16)
-      oscillator.connect(gain)
-      oscillator.start(audio.currentTime)
-      oscillator.stop(audio.currentTime + 0.17)
-      window.setTimeout(() => audio.close().catch(() => {}), 320)
+      ;[0, 0.45, 0.9, 1.35, 1.8, 2.25].forEach((delay) => {
+        const oscillator = audio.createOscillator()
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(820, audio.currentTime + delay)
+        oscillator.frequency.exponentialRampToValueAtTime(1040, audio.currentTime + delay + 0.16)
+        oscillator.connect(gain)
+        oscillator.start(audio.currentTime + delay)
+        oscillator.stop(audio.currentTime + delay + 0.28)
+      })
+      window.setTimeout(() => audio.close().catch(() => {}), 2900)
     } catch {
       // Le navigateur peut bloquer le son tant qu'aucune interaction utilisateur n'a eu lieu.
     }

@@ -86,6 +86,7 @@ def notifications_validations(request):
     if not is_superadmin(request):
         return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
 
+    current_admin_key, _, _ = admin_identity(request)
     validations = (
         ValidationBillet.objects
         .filter(confirme_le__isnull=True, invite__actif=True)
@@ -94,6 +95,8 @@ def notifications_validations(request):
     )
     notifications = []
     for validation in validations:
+        if validation_admin_key(validation) == current_admin_key:
+            continue
         invite = validation.invite
         notifications.append({
             'id': validation.id,

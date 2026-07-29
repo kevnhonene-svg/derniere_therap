@@ -1369,6 +1369,9 @@ textarea {
 }
 
 .validation-notification-card {
+  position: sticky;
+  z-index: 35;
+  top: 82px;
   display: grid;
   gap: 10px;
   margin-top: 14px;
@@ -1395,6 +1398,10 @@ textarea {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 10px;
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .validation-notification-list article {

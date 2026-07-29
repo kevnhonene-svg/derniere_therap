@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { CheckCircle2, Search, Ticket, UserCheck, XCircle } from 'lucide-react'
 import { api } from '../../services/api'
 
@@ -9,7 +9,7 @@ function ValidationBilletAdmin({ invites = [], onError }) {
   const [alertMessage, setAlertMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [validating, setValidating] = useState(false)
-  const [validationLocked, setValidationLocked] = useState(false)
+  const validationInFlightRef = useRef(false)
 
   const search = async (event) => {
     event.preventDefault()
@@ -46,10 +46,10 @@ function ValidationBilletAdmin({ invites = [], onError }) {
   }
 
   const validate = async () => {
-    if (validationLocked) return
+    if (validationInFlightRef.current) return
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
     let quickSpinner = null
-    setValidationLocked(true)
+    validationInFlightRef.current = true
     setValidating(true)
     setMessage('')
     setAlertMessage('')
@@ -64,7 +64,7 @@ function ValidationBilletAdmin({ invites = [], onError }) {
     } finally {
       if (quickSpinner) window.clearTimeout(quickSpinner)
       setValidating(false)
-      setValidationLocked(false)
+      validationInFlightRef.current = false
     }
   }
 
@@ -176,7 +176,7 @@ function ValidationBilletAdmin({ invites = [], onError }) {
 
           {message && <div className="ticket-validation-message">{message}</div>}
 
-          <button className="ticket-validate-button loading-button" type="button" onClick={validate} disabled={validationLocked || result.restant <= 0}>
+          <button className="ticket-validate-button loading-button" type="button" onClick={validate} disabled={result.restant <= 0}>
             {validating ? <span className="spinner" /> : <UserCheck size={20} />}
             <span>Valider</span>
           </button>

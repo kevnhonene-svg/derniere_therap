@@ -12,6 +12,7 @@ function ValidationBilletAdmin({ onError }) {
 
   const search = async (event) => {
     event.preventDefault()
+    if (loading) return
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
     setLoading(true)
     setMessage('')
@@ -28,6 +29,7 @@ function ValidationBilletAdmin({ onError }) {
   }
 
   const validate = async () => {
+    if (validating) return
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
     setValidating(true)
     setMessage('')
@@ -58,17 +60,17 @@ function ValidationBilletAdmin({ onError }) {
       </div>
 
       <form className="ticket-validation-search" onSubmit={search}>
-        <label className="field-label">
-          Code billet
+        <label className="field-label ticket-search-field">
+          <span>Code billet</span>
           <span className="ticket-input-wrap">
             <Ticket size={20} />
             <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Entrer ou scanner le code billet" />
+            <button className="ticket-search-button" type="submit" disabled={loading}>
+              {loading ? <span className="spinner" /> : <Search size={18} />}
+              <span>{loading ? '...' : 'Verifier'}</span>
+            </button>
           </span>
         </label>
-        <button className="loading-button" type="submit" disabled={loading}>
-          {loading ? <span className="spinner" /> : <Search size={18} />}
-          {loading ? 'Verification...' : 'Verifier'}
-        </button>
       </form>
 
       {!result && (
@@ -126,7 +128,7 @@ function ValidationBilletAdmin({ onError }) {
 
           <button className="ticket-validate-button loading-button" type="button" onClick={validate} disabled={validating || result.restant <= 0}>
             {validating ? <span className="spinner" /> : <UserCheck size={20} />}
-            {validating ? 'Validation...' : 'Valider la personne'}
+            {validating ? 'Validation...' : 'Valider'}
           </button>
         </div>
       )}

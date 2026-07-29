@@ -9,6 +9,7 @@ function ValidationBilletAdmin({ invites = [], onError }) {
   const [alertMessage, setAlertMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [validating, setValidating] = useState(false)
+  const [validationLocked, setValidationLocked] = useState(false)
 
   const search = async (event) => {
     event.preventDefault()
@@ -45,11 +46,14 @@ function ValidationBilletAdmin({ invites = [], onError }) {
   }
 
   const validate = async () => {
-    if (validating) return
+    if (validationLocked) return
     if (!code.trim()) return onError('Veuillez entrer le code billet.')
+    let quickSpinner = null
+    setValidationLocked(true)
     setValidating(true)
     setMessage('')
     setAlertMessage('')
+    quickSpinner = window.setTimeout(() => setValidating(false), 450)
     try {
       const data = await api.validerBillet({ code_billet: code.trim() })
       setResult(data)
@@ -58,7 +62,9 @@ function ValidationBilletAdmin({ invites = [], onError }) {
     } catch (err) {
       setAlertMessage(err.message)
     } finally {
+      if (quickSpinner) window.clearTimeout(quickSpinner)
       setValidating(false)
+      setValidationLocked(false)
     }
   }
 
@@ -170,9 +176,9 @@ function ValidationBilletAdmin({ invites = [], onError }) {
 
           {message && <div className="ticket-validation-message">{message}</div>}
 
-          <button className="ticket-validate-button loading-button" type="button" onClick={validate} disabled={validating || result.restant <= 0}>
+          <button className="ticket-validate-button loading-button" type="button" onClick={validate} disabled={validationLocked || result.restant <= 0}>
             {validating ? <span className="spinner" /> : <UserCheck size={20} />}
-            {validating ? 'Validation...' : 'Valider'}
+            <span>Valider</span>
           </button>
         </div>
       )}

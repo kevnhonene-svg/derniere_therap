@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { LogOut, User } from 'lucide-react'
 
 function getInitials(label = 'COFFA') {
@@ -11,8 +12,19 @@ function getInitials(label = 'COFFA') {
 }
 
 function Header({ config, session, onLogout }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const appName = config.nom_application || 'COFFA'
   const identity = session.invite?.nom_complet || session.user?.username || 'Superadmin'
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    try {
+      await onLogout()
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="topbar">
@@ -29,9 +41,9 @@ function Header({ config, session, onLogout }) {
           <User size={17} />
           <span>{identity}</span>
         </div>
-        <button className="logout-btn" type="button" onClick={onLogout}>
-          <LogOut size={17} />
-          <span>Sortir</span>
+        <button className="logout-btn" type="button" onClick={handleLogout} disabled={isLoggingOut}>
+          {isLoggingOut ? <span className="spinner" /> : <LogOut size={17} />}
+          <span>{isLoggingOut ? 'Sortie...' : 'Sortir'}</span>
         </button>
       </div>
     </header>

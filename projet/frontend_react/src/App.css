@@ -1653,6 +1653,186 @@ textarea {
   flex: 0 0 auto;
 }
 
+.table-plan-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.table-plan-actions button,
+.table-plan-view-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.table-plan-view {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #d9ccb3;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 16px;
+}
+
+.table-plan-view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #ece5d8;
+  padding-bottom: 12px;
+}
+
+.table-plan-view-head h2 {
+  margin: 4px 0 0;
+  color: #183c34;
+  font-size: 24px;
+}
+
+.table-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.table-plan-card {
+  overflow: hidden;
+  border: 1px solid #e2d7bf;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(33, 38, 34, 0.05);
+}
+
+.table-plan-card.inactive {
+  opacity: 0.72;
+}
+
+.table-plan-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #183c34;
+  padding: 12px;
+  color: #fff;
+}
+
+.table-plan-card header strong,
+.table-plan-card header span,
+.table-plan-card header small {
+  display: block;
+}
+
+.table-plan-card header strong {
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.table-plan-card header span,
+.table-plan-card header small {
+  opacity: 0.86;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.table-plan-meter {
+  height: 7px;
+  background: #efe8d9;
+}
+
+.table-plan-meter span {
+  display: block;
+  height: 100%;
+  background: #b89435;
+}
+
+.table-plan-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  background: #fbf7eb;
+  padding: 9px 12px;
+  color: #695b43;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.table-occupants {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.table-occupant-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #eee5d6;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 9px;
+}
+
+.table-occupant-row strong,
+.table-occupant-row span {
+  display: block;
+}
+
+.table-occupant-row strong {
+  overflow-wrap: anywhere;
+  color: #1d2824;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.table-occupant-row span {
+  margin-top: 3px;
+  color: #695b43;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.table-occupant-row small {
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.table-occupant-row em {
+  color: #183c34;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.table-plan-empty {
+  margin: 0;
+  padding: 18px 12px;
+  color: #695b43;
+  font-weight: 850;
+  text-align: center;
+}
+
+.table-plan-unassigned {
+  border: 1px solid #f0c4c4;
+  border-radius: 8px;
+  background: #fff7f7;
+  padding: 12px;
+}
+
+.table-plan-unassigned h3 {
+  margin: 0 0 8px;
+  color: #7a1f1f;
+  font-size: 18px;
+}
+
 .export-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1858,6 +2038,30 @@ textarea {
   .table-plan-export {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .table-plan-actions,
+  .table-plan-view-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .table-plan-actions button {
+    width: 100%;
+  }
+
+  .table-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-occupant-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .table-occupant-row small,
+  .table-occupant-row em {
+    justify-self: start;
   }
 
   .export-actions {

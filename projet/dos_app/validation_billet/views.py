@@ -40,8 +40,9 @@ def validation_payload(invite):
     validations = ValidationBillet.objects.filter(invite=invite).order_by('numero_personne')
     capacite = capacite_billet(invite)
     completes = sum(1 for validation in validations if validation.est_complete)
-    en_attente = any(not validation.est_complete for validation in validations)
-    deja_valide = completes + (0.5 if en_attente else 0)
+    validations_en_attente = sum(1 for validation in validations if not validation.est_complete)
+    en_attente = validations_en_attente > 0
+    deja_valide = completes + (validations_en_attente * 0.5)
     restant = max(capacite - deja_valide, 0)
     return {
         'invite': invite_to_dict(invite),
@@ -50,6 +51,7 @@ def validation_payload(invite):
         'restant': restant,
         'statut': 'utilise' if restant == 0 else 'valide',
         'validation_en_attente': en_attente,
+        'validations_en_attente': validations_en_attente,
         'validations': ValidationBilletSerializer(validations, many=True).data,
     }
 
@@ -97,29 +99,44 @@ def valider_billet(request):
                     "Veuillez d'abord lui affecter une table avant de valider son entree."
                 )
 
-            validations = ValidationBillet.objects.select_for_update().filter(invite=invite)
+            validations = list(ValidationBillet.objects.select_for_update().filter(invite=invite).order_by('numero_personne'))
             capacite = capacite_billet(invite)
-            completes = validations.filter(confirme_le__isnull=False).count()
-            validation_en_attente = validations.filter(confirme_le__isnull=True).order_by('numero_personne').first()
             current_admin_key, user, admin_name = admin_identity(request)
+            completes = sum(1 for validation in validations if validation.est_complete)
+            validations_en_attente = [validation for validation in validations if not validation.est_complete]
+            validation_a_confirmer = next(
+                (
+                    validation for validation in validations_en_attente
+                    if validation_admin_key(validation) != current_admin_key
+                ),
+                None,
+            )
+            action = 'started'
 
-            if not validation_en_attente and completes >= capacite:
+            if not validation_a_confirmer and completes >= capacite:
                 return error('Ce billet est deja utilise. Aucune entree restante pour ce code.')
 
-            if validation_en_attente:
-                if validation_admin_key(validation_en_attente) == current_admin_key:
+            if validation_a_confirmer:
+                validation_a_confirmer.confirme_par = user
+                validation_a_confirmer.confirme_par_session = admin_name
+                validation_a_confirmer.confirme_le = timezone.now()
+                validation_a_confirmer.save(update_fields=['confirme_par', 'confirme_par_session', 'confirme_le'])
+                action = 'confirmed'
+            else:
+                entrees_deja_ouvertes = completes + len(validations_en_attente)
+                if entrees_deja_ouvertes >= capacite:
                     return error(
                         "La deuxieme validation doit etre faite par un autre admin. "
-                        "Ce billet est encore a 0,5 et attend une confirmation."
+                        "Toutes les entrees disponibles de ce billet sont deja en attente de confirmation."
                     )
-                validation_en_attente.confirme_par = user
-                validation_en_attente.confirme_par_session = admin_name
-                validation_en_attente.confirme_le = timezone.now()
-                validation_en_attente.save(update_fields=['confirme_par', 'confirme_par_session', 'confirme_le'])
-            else:
+                numeros_existants = {validation.numero_personne for validation in validations}
+                numero_personne = next(
+                    numero for numero in range(1, capacite + 1)
+                    if numero not in numeros_existants
+                )
                 ValidationBillet.objects.create(
                     invite=invite,
-                    numero_personne=completes + 1,
+                    numero_personne=numero_personne,
                     valide_par=user,
                     valide_par_session=admin_name,
                 )
@@ -127,10 +144,12 @@ def valider_billet(request):
         return error('Code billet invalide.', status.HTTP_404_NOT_FOUND)
 
     payload = validation_payload(invite)
-    if payload['restant'] == 0:
+    if action == 'confirmed' and payload['restant'] == 0:
         payload['message'] = 'Deuxieme validation acceptee. Ce code est maintenant totalement utilise.'
-    elif payload['validation_en_attente']:
-        payload['message'] = 'Premiere validation enregistree. Une deuxieme validation par un autre admin est necessaire.'
-    else:
+    elif action == 'confirmed':
         payload['message'] = 'Deuxieme validation acceptee. Cette personne est validee.'
+    elif payload['validations_en_attente'] > 1:
+        payload['message'] = 'Validation partielle enregistree. Les deux entrees attendent maintenant un autre admin.'
+    else:
+        payload['message'] = 'Premiere validation enregistree. Une deuxieme validation par un autre admin est necessaire.'
     return success(payload, status.HTTP_201_CREATED)

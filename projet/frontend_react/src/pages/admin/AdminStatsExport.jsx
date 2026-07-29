@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { BarChart3, Download, FileSpreadsheet, Filter, Grid3X3 } from 'lucide-react'
-import { categories } from '../../constants'
+import { BarChart3, Download, Eye, FileSpreadsheet, Filter, Grid3X3, X } from 'lucide-react'
+import { categories, categoryClass } from '../../constants'
 import { api } from '../../services/api'
 
 const modules = [
@@ -22,6 +22,7 @@ const statusOptions = [
 function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
   const [exporting, setExporting] = useState(false)
   const [exportingTables, setExportingTables] = useState(false)
+  const [showTablePlan, setShowTablePlan] = useState(false)
   const [filters, setFilters] = useState({
     module: 'all',
     search: '',
@@ -51,6 +52,32 @@ function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
       { label: 'Quotas', value: quotas.length, detail: 'regles disponibles' },
     ]
   }, [boissons, invites, quotas])
+
+  const tablePlan = useMemo(() => {
+    const placeCount = (invite) => ['vip_couple', 'vip_premium'].includes(invite.categorie_billet) ? 2 : 1
+    const grouped = tables
+      .map((table) => {
+        const occupants = invites
+          .filter((invite) => invite.table?.id === table.id)
+          .sort((a, b) => a.nom_complet.localeCompare(b.nom_complet))
+          .map((invite) => ({ ...invite, places_table: placeCount(invite) }))
+        const occupied = occupants.reduce((total, invite) => total + invite.places_table, 0)
+        return {
+          ...table,
+          occupants,
+          places_occupees_vue: occupied,
+          places_restantes_vue: Math.max(Number(table.nombre_places || 0) - occupied, 0),
+        }
+      })
+      .sort((a, b) => a.nom.localeCompare(b.nom))
+
+    const sansTable = invites
+      .filter((invite) => !invite.table)
+      .sort((a, b) => a.nom_complet.localeCompare(b.nom_complet))
+      .map((invite) => ({ ...invite, places_table: placeCount(invite) }))
+
+    return { tables: grouped, sansTable }
+  }, [invites, tables])
 
   const setValue = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
 
@@ -105,13 +132,90 @@ function AdminStatsExport({ tables, invites, boissons, quotas, onError }) {
         <div>
           <span className="admin-kicker">Plan de salle</span>
           <h2>Repartition des tables</h2>
-          <p>Generez un fichier separe avec chaque table, ses codes billets, ses occupants et les places restantes.</p>
+          <p>Consultez ou generez un fichier separe avec chaque table, ses codes billets, ses occupants et les places restantes.</p>
         </div>
-        <button className="admin-primary" type="button" onClick={exportTablePlan} disabled={exportingTables}>
-          {exportingTables ? <BarChart3 size={18} /> : <Grid3X3 size={18} />}
-          <span>{exportingTables ? 'Generation...' : 'Exporter tables'}</span>
-        </button>
+        <div className="table-plan-actions">
+          <button className="secondary" type="button" onClick={() => setShowTablePlan(true)}>
+            <Eye size={18} />
+            <span>Voir repartition</span>
+          </button>
+          <button className="admin-primary" type="button" onClick={exportTablePlan} disabled={exportingTables}>
+            {exportingTables ? <BarChart3 size={18} /> : <Grid3X3 size={18} />}
+            <span>{exportingTables ? 'Generation...' : 'Exporter tables'}</span>
+          </button>
+        </div>
       </div>
+
+      {showTablePlan && (
+        <div className="table-plan-view">
+          <div className="table-plan-view-head">
+            <div>
+              <span className="admin-kicker">Affichage direct</span>
+              <h2>Repartition des tables</h2>
+            </div>
+            <button className="secondary" type="button" onClick={() => setShowTablePlan(false)}>
+              <X size={18} />
+              <span>Fermer</span>
+            </button>
+          </div>
+
+          <div className="table-plan-grid">
+            {tablePlan.tables.map((table) => (
+              <article className={`table-plan-card ${table.active ? '' : 'inactive'}`} key={table.id}>
+                <header>
+                  <div>
+                    <strong>{table.nom}</strong>
+                    <span>{table.occupants.length} invite(s)</span>
+                  </div>
+                  <small>{table.places_occupees_vue}/{table.nombre_places} places</small>
+                </header>
+                <div className="table-plan-meter">
+                  <span style={{ width: `${Math.min((table.places_occupees_vue / Math.max(Number(table.nombre_places || 1), 1)) * 100, 100)}%` }} />
+                </div>
+                <div className="table-plan-summary">
+                  <span>Occupees: {table.places_occupees_vue}</span>
+                  <span>Restantes: {table.places_restantes_vue}</span>
+                </div>
+
+                {table.occupants.length > 0 ? (
+                  <div className="table-occupants">
+                    {table.occupants.map((invite) => (
+                      <div className="table-occupant-row" key={invite.id}>
+                        <div>
+                          <strong>{invite.nom_complet}</strong>
+                          <span>{invite.code_billet}</span>
+                        </div>
+                        <small className={categoryClass[invite.categorie_billet] || ''}>{invite.categorie_billet_label}</small>
+                        <em>{invite.places_table} place(s)</em>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="table-plan-empty">Aucun invite affecte.</p>
+                )}
+              </article>
+            ))}
+          </div>
+
+          {tablePlan.sansTable.length > 0 && (
+            <section className="table-plan-unassigned">
+              <h3>Invites sans table</h3>
+              <div className="table-occupants">
+                {tablePlan.sansTable.map((invite) => (
+                  <div className="table-occupant-row" key={invite.id}>
+                    <div>
+                      <strong>{invite.nom_complet}</strong>
+                      <span>{invite.code_billet}</span>
+                    </div>
+                    <small className={categoryClass[invite.categorie_billet] || ''}>{invite.categorie_billet_label}</small>
+                    <em>{invite.places_table} place(s)</em>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
 
       <form className="export-form" onSubmit={submit}>
         <div className="export-form-title">

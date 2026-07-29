@@ -116,6 +116,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
   }, [])
 
   const activeSection = sections.find((section) => section.id === tab) || sections[0]
+  const compactAdminView = ['validation', 'presence'].includes(tab)
   const tableSeats = useMemo(() => tables.reduce((acc, table) => acc + Number(table.nombre_places || 0), 0), [tables])
   const occupiedSeats = useMemo(() => tables.reduce((acc, table) => acc + Number(table.places_occupees || 0), 0), [tables])
   const totalStock = useMemo(() => boissons.reduce((acc, drink) => acc + Number(drink.quantite_stock || 0), 0), [boissons])
@@ -148,7 +149,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
     <>
       <Header config={config} session={session} onLogout={onLogout} />
       <main className="admin-space">
-        {tab === 'validation' ? (
+        {compactAdminView ? (
           <div className="validation-quick-refresh">
             <button className="admin-refresh" type="button" onClick={() => load().catch((err) => onError(err.message))} disabled={loading}>
               <RefreshCw size={18} />
@@ -192,7 +193,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
           </section>
         )}
 
-        {tab !== 'validation' && (
+        {!compactAdminView && (
           <section className="admin-stats" aria-label="Resume administration">
             {stats.map((stat) => {
               const Icon = stat.icon
@@ -233,7 +234,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
           </aside>
 
           <div className="admin-content">
-            {tab !== 'validation' && (
+            {!compactAdminView && (
               <div className="admin-content-head">
                 <div>
                   <span className="admin-kicker">Module actif</span>

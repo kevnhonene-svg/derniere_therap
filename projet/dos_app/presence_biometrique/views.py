@@ -151,7 +151,7 @@ def options_action(request):
                 for credential_id in credentials
             ],
             'userVerification': 'required',
-            'timeout': 12000,
+            'timeout': 4000,
         },
     })
 

@@ -91,6 +91,7 @@ function PresenceBiometriqueAdmin({ onError }) {
 
   const countInside = presences.filter((presence) => presence.statut === 'dans_salle').length
   const countOutside = presences.filter((presence) => presence.statut === 'sorti').length
+  const visiblePresences = presences.filter((presence) => presence.statut === 'sorti')
 
   return (
     <section className="admin-panel biometric-panel">
@@ -109,7 +110,7 @@ function PresenceBiometriqueAdmin({ onError }) {
         <button className="biometric-main-action" type="button" onClick={scanPresence} disabled={Boolean(working)}>
           {working === 'scan' ? <span className="spinner" /> : <ShieldCheck size={24} />}
           <span>Scanner empreinte</span>
-          <small>Premiere fois: enregistre et marque sortie. Ensuite: sortie puis entree automatiquement.</small>
+          <small>Le telephone demande l empreinte. Premiere fois: PRES est cree et sortie marquee. Ensuite: entree/sortie automatique.</small>
         </button>
       </div>
 
@@ -131,10 +132,10 @@ function PresenceBiometriqueAdmin({ onError }) {
       </div>
 
       <div className="biometric-list">
-        {presences.length === 0 && (
-          <div className="admin-empty">Aucune presence biometrique enregistree pour le moment.</div>
+        {visiblePresences.length === 0 && (
+          <div className="admin-empty">Aucune personne sortie pour le moment.</div>
         )}
-        {presences.map((presence) => {
+        {visiblePresences.map((presence) => {
           const inside = presence.statut === 'dans_salle'
           const Icon = inside ? LogIn : LogOut
           return (

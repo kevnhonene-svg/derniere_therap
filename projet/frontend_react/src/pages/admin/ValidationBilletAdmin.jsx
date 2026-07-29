@@ -31,6 +31,7 @@ function ValidationBilletAdmin({ invites = [], onError }) {
         validations_en_attente: 0,
         validations: [],
       })
+      setLoading(false)
     }
     try {
       const data = await api.rechercherBillet(cleanCode)

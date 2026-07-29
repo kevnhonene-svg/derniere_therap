@@ -1362,6 +1362,17 @@ textarea {
   background: #183c34;
 }
 
+.validation-quick-refresh {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.validation-quick-refresh .admin-refresh {
+  min-height: 40px;
+  padding: 9px 13px;
+}
+
 .admin-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

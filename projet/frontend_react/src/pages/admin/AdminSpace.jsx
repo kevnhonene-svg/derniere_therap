@@ -146,17 +146,26 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
     <>
       <Header config={config} session={session} onLogout={onLogout} />
       <main className="admin-space">
-        <section className="admin-hero">
-          <div>
-            <span className="admin-kicker">Espace administrateur</span>
-            <h1>{config?.nom_evenement || 'Administration evenement'}</h1>
-            <p>Pilotez les invites, tables, stocks, quotas et parametres depuis un espace clair et organise.</p>
+        {tab === 'validation' ? (
+          <div className="validation-quick-refresh">
+            <button className="admin-refresh" type="button" onClick={() => load().catch((err) => onError(err.message))} disabled={loading}>
+              <RefreshCw size={18} />
+              <span>{loading ? '...' : 'Actualiser'}</span>
+            </button>
           </div>
-          <button className="admin-refresh" type="button" onClick={() => load().catch((err) => onError(err.message))} disabled={loading}>
-            <RefreshCw size={18} />
-            <span>{loading ? 'Synchronisation...' : 'Actualiser'}</span>
-          </button>
-        </section>
+        ) : (
+          <section className="admin-hero">
+            <div>
+              <span className="admin-kicker">Espace administrateur</span>
+              <h1>{config?.nom_evenement || 'Administration evenement'}</h1>
+              <p>Pilotez les invites, tables, stocks, quotas et parametres depuis un espace clair et organise.</p>
+            </div>
+            <button className="admin-refresh" type="button" onClick={() => load().catch((err) => onError(err.message))} disabled={loading}>
+              <RefreshCw size={18} />
+              <span>{loading ? 'Synchronisation...' : 'Actualiser'}</span>
+            </button>
+          </section>
+        )}
 
         {validationNotifications.length > 0 && (
           <section className="validation-notification-card">

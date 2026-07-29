@@ -43,18 +43,17 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
       const gain = audio.createGain()
       gain.connect(audio.destination)
       gain.gain.setValueAtTime(0.0001, audio.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.16, audio.currentTime + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.45)
+      gain.gain.exponentialRampToValueAtTime(0.2, audio.currentTime + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.18)
 
-      ;[0, 0.14].forEach((delay, index) => {
-        const oscillator = audio.createOscillator()
-        oscillator.type = 'sine'
-        oscillator.frequency.setValueAtTime(index === 0 ? 740 : 980, audio.currentTime + delay)
-        oscillator.connect(gain)
-        oscillator.start(audio.currentTime + delay)
-        oscillator.stop(audio.currentTime + delay + 0.13)
-      })
-      window.setTimeout(() => audio.close().catch(() => {}), 700)
+      const oscillator = audio.createOscillator()
+      oscillator.type = 'triangle'
+      oscillator.frequency.setValueAtTime(920, audio.currentTime)
+      oscillator.frequency.exponentialRampToValueAtTime(680, audio.currentTime + 0.16)
+      oscillator.connect(gain)
+      oscillator.start(audio.currentTime)
+      oscillator.stop(audio.currentTime + 0.17)
+      window.setTimeout(() => audio.close().catch(() => {}), 320)
     } catch {
       // Le navigateur peut bloquer le son tant qu'aucune interaction utilisateur n'a eu lieu.
     }
@@ -125,6 +124,22 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
     { label: 'Quotas actifs', value: quotas.length, note: 'Regles billets', icon: ShieldCheck },
   ]
 
+  const groupedValidationNotifications = useMemo(() => {
+    const groups = new Map()
+    validationNotifications.forEach((item) => {
+      const key = item.code_billet
+      const current = groups.get(key) || { ...item, personnes: [], admins: new Set() }
+      current.personnes.push(item.numero_personne)
+      if (item.admin) current.admins.add(item.admin)
+      groups.set(key, current)
+    })
+    return Array.from(groups.values()).map((item) => ({
+      ...item,
+      personnes: [...new Set(item.personnes)].sort((a, b) => a - b),
+      admins: Array.from(item.admins),
+    }))
+  }, [validationNotifications])
+
   return (
     <>
       <Header config={config} session={{ user: { username: 'Superadmin' } }} onLogout={onLogout} />
@@ -149,12 +164,14 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
             </button>
             {showNotifications && (
               <div className="validation-notification-list">
-                {validationNotifications.map((item) => (
-                  <article key={item.id}>
+                {groupedValidationNotifications.map((item) => (
+                  <article key={item.code_billet}>
                     <strong>{item.code_billet}</strong>
                     <span>{item.invite_nom}</span>
-                    <small>Table: {item.table} | {item.categorie_billet} | Personne {item.numero_personne}</small>
-                    <em>Premiere validation par {item.admin || 'Admin'}</em>
+                    <small>
+                      Table: {item.table} | {item.categorie_billet} | Personne(s) {item.personnes.join(', ')}
+                    </small>
+                    <em>Premiere validation par {item.admins.join(', ') || 'Admin'}</em>
                   </article>
                 ))}
               </div>
@@ -162,21 +179,23 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
           </section>
         )}
 
-        <section className="admin-stats" aria-label="Resume administration">
-          {stats.map((stat) => {
-            const Icon = stat.icon
-            return (
-              <article className="admin-stat-card" key={stat.label}>
-                <span className="admin-stat-icon"><Icon size={19} /></span>
-                <div>
-                  <strong>{stat.value}</strong>
-                  <span>{stat.label}</span>
-                  <small>{stat.note}</small>
-                </div>
-              </article>
-            )
-          })}
-        </section>
+        {tab !== 'validation' && (
+          <section className="admin-stats" aria-label="Resume administration">
+            {stats.map((stat) => {
+              const Icon = stat.icon
+              return (
+                <article className="admin-stat-card" key={stat.label}>
+                  <span className="admin-stat-icon"><Icon size={19} /></span>
+                  <div>
+                    <strong>{stat.value}</strong>
+                    <span>{stat.label}</span>
+                    <small>{stat.note}</small>
+                  </div>
+                </article>
+              )
+            })}
+          </section>
+        )}
 
         <section className="admin-workspace">
           <aside className="admin-sidebar" aria-label="Navigation admin">
@@ -201,13 +220,15 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
           </aside>
 
           <div className="admin-content">
-            <div className="admin-content-head">
-              <div>
-                <span className="admin-kicker">Module actif</span>
-                <h2>{activeSection.label}</h2>
+            {tab !== 'validation' && (
+              <div className="admin-content-head">
+                <div>
+                  <span className="admin-kicker">Module actif</span>
+                  <h2>{activeSection.label}</h2>
+                </div>
+                <span className="admin-status-pill">{activeSection.hint}</span>
               </div>
-              <span className="admin-status-pill">{activeSection.hint}</span>
-            </div>
+            )}
             {tab === 'validation' && <ValidationBilletAdmin invites={invites} onError={onError} />}
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}

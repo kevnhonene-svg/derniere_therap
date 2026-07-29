@@ -92,8 +92,8 @@ function ValidationBilletAdmin({ invites = [], onError }) {
     <section className="admin-panel validation-panel">
       <div className="admin-panel-head">
         <div>
-          <span className="admin-kicker">Controle entree</span>
-          <h1>Validation des billets</h1>
+          <span className="admin-kicker">Entree</span>
+          <h1>Controle billet</h1>
         </div>
       </div>
 

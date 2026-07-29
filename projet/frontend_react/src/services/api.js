@@ -74,6 +74,7 @@ export const api = {
   updateCommande: (id, payload) => request(`/commandes/${id}/statut/`, { method: 'POST', body: payload }),
   rechercherBillet: (code) => request(`/validation-billets/rechercher/?code=${encodeURIComponent(code)}`),
   validerBillet: (payload) => request('/validation-billets/valider/', { method: 'POST', body: payload }),
+  notificationsValidations: () => request('/validation-billets/notifications/'),
   messages: ({ markRead = false, inviteId = '' } = {}) => {
     const params = new URLSearchParams()
     if (markRead) params.set('mark_read', '1')

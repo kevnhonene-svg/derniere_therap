@@ -29,7 +29,52 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
   const [quotas, setQuotas] = useState([])
   const [indicationsQuotas, setIndicationsQuotas] = useState([])
   const [loading, setLoading] = useState(false)
+  const [validationNotifications, setValidationNotifications] = useState([])
+  const [showNotifications, setShowNotifications] = useState(false)
   const syncingRef = useRef(false)
+  const notificationIdsRef = useRef(new Set())
+  const notificationsReadyRef = useRef(false)
+
+  const playNotificationSound = () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext
+      if (!AudioContext) return
+      const audio = new AudioContext()
+      const gain = audio.createGain()
+      gain.connect(audio.destination)
+      gain.gain.setValueAtTime(0.0001, audio.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.16, audio.currentTime + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.45)
+
+      ;[0, 0.14].forEach((delay, index) => {
+        const oscillator = audio.createOscillator()
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(index === 0 ? 740 : 980, audio.currentTime + delay)
+        oscillator.connect(gain)
+        oscillator.start(audio.currentTime + delay)
+        oscillator.stop(audio.currentTime + delay + 0.13)
+      })
+      window.setTimeout(() => audio.close().catch(() => {}), 700)
+    } catch {
+      // Le navigateur peut bloquer le son tant qu'aucune interaction utilisateur n'a eu lieu.
+    }
+  }
+
+  const loadValidationNotifications = async () => {
+    const data = await api.notificationsValidations()
+    const notifications = data.notifications || []
+    const nextIds = new Set(notifications.map((item) => item.id))
+    const newItems = notifications.filter((item) => !notificationIdsRef.current.has(item.id))
+    setValidationNotifications(notifications)
+
+    if (notificationsReadyRef.current && newItems.length > 0) {
+      setShowNotifications(true)
+      playNotificationSound()
+    }
+
+    notificationIdsRef.current = nextIds
+    notificationsReadyRef.current = true
+  }
 
   const load = async ({ silent = false } = {}) => {
     if (syncingRef.current) return
@@ -56,10 +101,12 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
 
   useEffect(() => {
     load().catch((err) => onError(err.message))
+    loadValidationNotifications().catch(() => {})
 
     const interval = window.setInterval(() => {
       if (document.hidden) return
       load({ silent: true }).catch(() => {})
+      loadValidationNotifications().catch(() => {})
     }, 5000)
 
     return () => window.clearInterval(interval)
@@ -93,6 +140,27 @@ function AdminSpace({ config, setConfig, onLogout, onError }) {
             <span>{loading ? 'Synchronisation...' : 'Actualiser'}</span>
           </button>
         </section>
+
+        {validationNotifications.length > 0 && (
+          <section className="validation-notification-card">
+            <button type="button" onClick={() => setShowNotifications((value) => !value)}>
+              <TicketCheck size={19} />
+              <span>{validationNotifications.length} validation(s) a confirmer</span>
+            </button>
+            {showNotifications && (
+              <div className="validation-notification-list">
+                {validationNotifications.map((item) => (
+                  <article key={item.id}>
+                    <strong>{item.code_billet}</strong>
+                    <span>{item.invite_nom}</span>
+                    <small>Table: {item.table} | {item.categorie_billet} | Personne {item.numero_personne}</small>
+                    <em>Premiere validation par {item.admin || 'Admin'}</em>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="admin-stats" aria-label="Resume administration">
           {stats.map((stat) => {

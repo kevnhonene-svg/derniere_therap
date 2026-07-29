@@ -79,6 +79,35 @@ def rechercher_billet(request):
     return success(validation_payload(invite))
 
 
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def notifications_validations(request):
+    if not is_superadmin(request):
+        return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
+
+    validations = (
+        ValidationBillet.objects
+        .filter(confirme_le__isnull=True, invite__actif=True)
+        .select_related('invite', 'invite__table', 'valide_par')
+        .order_by('-cree_le')[:20]
+    )
+    notifications = []
+    for validation in validations:
+        invite = validation.invite
+        notifications.append({
+            'id': validation.id,
+            'code_billet': invite.code_billet,
+            'invite_nom': invite.nom_complet,
+            'table': invite.table.nom if invite.table else 'Sans table',
+            'categorie_billet': invite.get_categorie_billet_display(),
+            'numero_personne': validation.numero_personne,
+            'admin': validation.valide_par.username if validation.valide_par else validation.valide_par_session,
+            'cree_le': validation.cree_le,
+        })
+    return success({'notifications': notifications})
+
+
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([AllowAny])

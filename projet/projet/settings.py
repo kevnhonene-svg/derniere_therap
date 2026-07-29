@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'dos_app.commande',
     'dos_app.message',
     'dos_app.validation_billet',
+    'dos_app.presence_biometrique',
 ]
 
 MIDDLEWARE = [

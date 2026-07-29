@@ -75,6 +75,11 @@ export const api = {
   rechercherBillet: (code) => request(`/validation-billets/rechercher/?code=${encodeURIComponent(code)}`),
   validerBillet: (payload) => request('/validation-billets/valider/', { method: 'POST', body: payload }),
   notificationsValidations: () => request('/validation-billets/notifications/'),
+  presencesBiometriques: () => request('/presence-biometrique/'),
+  optionsPresenceEnregistrement: () => request('/presence-biometrique/enregistrement/options/', { method: 'POST', body: {} }),
+  confirmerPresenceEnregistrement: (payload) => request('/presence-biometrique/enregistrement/confirmer/', { method: 'POST', body: payload }),
+  optionsPresenceAction: () => request('/presence-biometrique/action/options/', { method: 'POST', body: {} }),
+  confirmerPresenceAction: (payload) => request('/presence-biometrique/action/confirmer/', { method: 'POST', body: payload }),
   messages: ({ markRead = false, inviteId = '' } = {}) => {
     const params = new URLSearchParams()
     if (markRead) params.set('mark_read', '1')

@@ -160,6 +160,23 @@ function OrderListItem({ commande, onOpen }) {
     </button>
   )
 }
+
+function OrderGroupListItem({ group, onOpen }) {
+  return (
+    <button className="order-list-item" type="button" onClick={() => onOpen(group.key)}>
+      <span className="order-list-avatar">{group.commandes.length}</span>
+      <span className="order-list-copy">
+        <strong>{group.invite.nom_complet}</strong>
+        <span className="order-list-sub"><span className="order-qty-box">{group.totalBouteilles}</span><span>bouteille(s) - {group.commandes.length} commande(s) reunie(s)</span></span>
+      </span>
+      <span className="order-list-meta">
+        <StatusBadge status={group.statutPrincipal} label={group.statutLabel} />
+        {group.invite.table && <small>Table {group.invite.table}</small>}
+      </span>
+    </button>
+  )
+}
+
 function OrderLine({ ligne }) {
   return (
     <li className="order-line">
@@ -170,6 +187,69 @@ function OrderLine({ ligne }) {
         <span className="qty-label">Quantite commandee</span><span className="qty-value">{ligne.quantite}</span>
       </span>
     </li>
+  )
+}
+
+function OrderGroupDetail({ group, onUpdate }) {
+  const lines = Array.from(group.lignes.values())
+
+  return (
+    <article className={`order-card ${categoryClass[group.invite.categorie_billet] || 'default'}`}>
+      <div className="order-header">
+        <div className="order-id">
+          <span className="id-hash">#</span>
+          <span className="id-number">{group.commandes.map((commande) => commande.id).join(' + ')}</span>
+        </div>
+        <StatusBadge status={group.statutPrincipal} label={group.statutLabel} />
+      </div>
+
+      <div className="order-guest">
+        <div className="guest-avatar">
+          <span className="avatar-icon">{Icons.user}</span>
+        </div>
+        <div className="guest-info">
+          <h3 className="guest-name">{group.invite.nom_complet}</h3>
+          <div className="guest-meta">
+            <span className="meta-tag">
+              <span className="meta-icon">{Icons.tag}</span>
+              {group.invite.categorie_billet_label}
+            </span>
+            {group.invite.table && (
+              <span className="meta-table">
+                <span className="meta-icon">{Icons.table}</span>
+                Table {group.invite.table}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="order-divider" />
+
+      <ul className="order-lines">
+        {lines.map((ligne) => (
+          <OrderLine key={ligne.id} ligne={ligne} />
+        ))}
+      </ul>
+
+      <div className="order-actions">
+        {group.commandes.every((commande) => commande.statut === 'livree') && <span className="order-locked">Toutes les commandes sont livrees.</span>}
+        <ActionButton
+          icon={Icons.truck}
+          label="Tout livrer"
+          variant="livree"
+          onClick={() => onUpdate(group.commandes.filter((commande) => commande.statut !== 'livree').map((commande) => commande.id), 'livree')}
+          disabled={group.commandes.every((commande) => commande.statut === 'livree')}
+        />
+        <ActionButton
+          icon={Icons.clock}
+          label="Tout attente"
+          variant="en_attente"
+          onClick={() => onUpdate(group.commandes.filter((commande) => commande.statut !== 'livree' && commande.statut !== 'en_attente').map((commande) => commande.id), 'en_attente')}
+          disabled={group.commandes.every((commande) => commande.statut === 'livree' || commande.statut === 'en_attente')}
+        />
+      </div>
+    </article>
   )
 }
 
@@ -271,7 +351,7 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
         api.messages({ markRead, inviteId })
       ])
       setCommandes(cmdData.commandes)
-      setSelectedCommande((current) => current && cmdData.commandes.some((commande) => commande.id === current) ? current : null)
+      setSelectedCommande((current) => current && cmdData.commandes.some((commande) => String(commande.invite.id) === String(current)) ? current : null)
       setMessages(msgData.messages)
       setSelectedInvite((current) => current && msgData.messages.some((msg) => String(msg.invite_id) === String(current)) ? current : '')
       setLastUpdate(new Date())
@@ -302,7 +382,8 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
 
   const update = async (id, statut) => {
     try {
-      await api.updateCommande(id, { statut })
+      const ids = Array.isArray(id) ? id : [id]
+      await Promise.all(ids.map((commandeId) => api.updateCommande(commandeId, { statut })))
       await load()
     } catch (err) {
       onError(err.message)
@@ -318,7 +399,6 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
 
   const pendingCount = commandes.filter(c => c.statut === 'en_attente').length
   const deliveredCount = commandes.filter(c => c.statut === 'livree').length
-  const selectedOrder = commandes.find((commande) => commande.id === selectedCommande)
   const statusOptions = [
     ['en_attente', 'En attente'],
     ['validee', 'Validees'],
@@ -339,6 +419,45 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
     const matchTable = tableFilter === 'tous' || String(commande.invite.table || '') === tableFilter
     return matchStatus && matchTicket && matchTable
   })
+  const orderGroups = Array.from(filteredCommandes.reduce((groups, commande) => {
+    const key = String(commande.invite.id)
+    const current = groups.get(key) || {
+      key,
+      invite: commande.invite,
+      commandes: [],
+      lignes: new Map(),
+      totalBouteilles: 0,
+      statutPrincipal: commande.statut,
+      statutLabel: commande.statut_label,
+    }
+    current.commandes.push(commande)
+    current.totalBouteilles += commande.lignes.reduce((sum, ligne) => sum + ligne.quantite, 0)
+    commande.lignes.forEach((ligne) => {
+      const lineKey = String(ligne.boisson.id)
+      const existing = current.lignes.get(lineKey)
+      current.lignes.set(lineKey, {
+        ...ligne,
+        id: lineKey,
+        quantite: (existing?.quantite || 0) + ligne.quantite,
+      })
+    })
+    if (current.commandes.some((item) => item.statut === 'en_attente')) {
+      current.statutPrincipal = 'en_attente'
+      current.statutLabel = 'En attente'
+    } else if (current.commandes.some((item) => item.statut === 'validee')) {
+      current.statutPrincipal = 'validee'
+      current.statutLabel = 'Validee'
+    } else if (current.commandes.every((item) => item.statut === 'livree')) {
+      current.statutPrincipal = 'livree'
+      current.statutLabel = 'Livree'
+    } else {
+      current.statutPrincipal = current.commandes[0].statut
+      current.statutLabel = current.commandes[0].statut_label
+    }
+    groups.set(key, current)
+    return groups
+  }, new Map()).values())
+  const selectedOrder = orderGroups.find((group) => group.key === selectedCommande)
   const unreadClientMessages = messages.filter((message) => message.auteur === 'client' && !message.lu).length
   const protocolNavItems = [
     { key: 'commandes', label: 'Commandes', icon: Icons.glass, badge: pendingCount },
@@ -442,17 +561,17 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
                   <span>{Icons.back}</span>
                   Retour aux commandes
                 </button>
-                <OrderCard commande={selectedOrder} onUpdate={update} />
+                <OrderGroupDetail group={selectedOrder} onUpdate={update} />
               </div>
             ) : (
               <div className="orders-grid order-list-grid">
-                {filteredCommandes.length === 0 ? (
+                {orderGroups.length === 0 ? (
                   <EmptyState />
                 ) : (
-                  filteredCommandes.map((commande) => (
-                    <OrderListItem
-                      key={commande.id}
-                      commande={commande}
+                  orderGroups.map((group) => (
+                    <OrderGroupListItem
+                      key={group.key}
+                      group={group}
                       onOpen={setSelectedCommande}
                     />
                   ))

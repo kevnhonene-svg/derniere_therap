@@ -4,6 +4,16 @@
   color: #1d2320;
 }
 
+.order-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.order-filters label {
+  min-width: 0;
+}
+
 button,
 input,
 select,
@@ -2014,172 +2024,170 @@ textarea {
   font-size: 18px;
 }
 
-.biometric-panel {
-  display: grid;
-  gap: 16px;
-}
-
-.biometric-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.biometric-actions button {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-  min-height: 132px;
-  border: 1px solid #d9ccb3;
-  background: #183c34;
-  padding: 18px;
-  text-align: left;
-  box-shadow: 0 12px 28px rgba(24, 60, 52, 0.12);
-}
-
-.biometric-actions button:last-child {
-  background: #237a57;
-}
-
-.biometric-actions .biometric-main-action {
-  grid-column: 1 / -1;
-  background: #237a57;
-}
-
-.biometric-actions button span {
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.biometric-actions button small {
-  color: rgba(255, 255, 255, 0.82);
-  font-weight: 750;
-  line-height: 1.35;
-}
-
-.biometric-summary {
+.voice-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.biometric-summary article {
+.voice-summary article {
   border: 1px solid #e6decd;
   border-radius: 8px;
   background: #fff;
   padding: 14px;
 }
 
-.biometric-summary strong,
-.biometric-summary span {
+.voice-summary strong,
+.voice-summary span {
   display: block;
 }
 
-.biometric-summary strong {
+.voice-summary strong {
   color: #183c34;
   font-size: 28px;
   line-height: 1;
 }
 
-.biometric-summary span {
+.voice-summary span {
   margin-top: 5px;
   color: #695b43;
   font-weight: 900;
 }
 
-.biometric-list {
+.voice-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.voice-capture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.voice-capture > div,
+.voice-capture button {
+  display: grid;
+  align-content: center;
+  gap: 9px;
+  min-height: 150px;
+  border: 1px solid #d9ccb3;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.voice-capture > div {
+  background: #fffdf8;
+  color: #183c34;
+}
+
+.voice-capture strong,
+.voice-capture span,
+.voice-capture small {
+  display: block;
+}
+
+.voice-capture strong {
+  font-size: 20px;
+}
+
+.voice-capture span {
+  color: #695b43;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.voice-capture button {
+  justify-items: start;
+  background: #237a57;
+  text-align: left;
+  box-shadow: 0 12px 28px rgba(35, 122, 87, 0.14);
+}
+
+.voice-capture button span {
+  color: #fff;
+}
+
+.voice-capture button small {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.voice-list {
   display: grid;
   gap: 10px;
 }
 
-.biometric-list article {
+.voice-list article {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   border: 1px solid #e6decd;
-  border-left: 5px solid #237a57;
+  border-left: 5px solid #8b2d2d;
   border-radius: 8px;
   background: #fffdf8;
   padding: 12px;
 }
 
-.biometric-list article.outside {
-  border-left-color: #8b2d2d;
-}
-
-.biometric-presence-main {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.biometric-icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: 8px;
-  background: #eef5f1;
-  color: #183c34;
-}
-
-.biometric-presence-main strong,
-.biometric-presence-main small,
-.biometric-last {
+.voice-list strong,
+.voice-list span,
+.voice-list small,
+.voice-list em,
+.voice-list p {
   display: block;
 }
 
-.biometric-presence-main strong {
+.voice-list strong {
   color: #183c34;
   font-size: 17px;
 }
 
-.biometric-presence-main small,
-.biometric-last {
-  overflow: hidden;
+.voice-list span,
+.voice-list p {
   color: #695b43;
   font-size: 12px;
   font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.biometric-status,
-.biometric-counts {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.voice-list small,
+.voice-list em {
   border-radius: 999px;
-  background: #eef5f1;
-  color: #183c34;
+  background: #fcecec;
+  color: #8b2d2d;
   padding: 8px 10px;
   font-size: 12px;
+  font-style: normal;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.biometric-list article.outside .biometric-status {
-  background: #fcecec;
-  color: #8b2d2d;
-}
-
-.biometric-counts {
+.voice-list em {
   background: #fbf7eb;
   color: #695b43;
 }
 
-.biometric-counts span + span {
-  border-left: 1px solid #ded6c5;
-  padding-left: 7px;
-}
-
-.biometric-last {
+.voice-list p {
   grid-column: 1 / -1;
   border-top: 1px solid #eee5d6;
+  margin: 0;
   padding-top: 8px;
+}
+
+.voice-inside-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #c9dfd4;
+  border-radius: 999px;
+  background: #eef8f3;
+  color: #237a57;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .export-form {
@@ -2437,6 +2445,20 @@ textarea {
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .voice-capture,
+  .voice-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .voice-list small,
+  .voice-list em,
+  .voice-inside-note {
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
   }
 
   .export-actions {

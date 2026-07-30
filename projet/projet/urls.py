@@ -29,7 +29,7 @@ urlpatterns = [
     path('api/commandes/', include('dos_app.commande.urls')),
     path('api/messages/', include('dos_app.message.urls')),
     path('api/validation-billets/', include('dos_app.validation_billet.urls')),
-    path('api/presence-biometrique/', include('dos_app.presence_biometrique.urls')),
+    path('api/presence-vocale/', include('dos_app.presence_vocale.urls')),
 ]
 
 if settings.DEBUG:

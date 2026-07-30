@@ -255,6 +255,7 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
   const [selectedCommande, setSelectedCommande] = useState(null)
   const [statusFilter, setStatusFilter] = useState('en_attente')
   const [ticketFilter, setTicketFilter] = useState('tous')
+  const [tableFilter, setTableFilter] = useState('tous')
   const [commandes, setCommandes] = useState([])
   const [messages, setMessages] = useState([])
   const [reply, setReply] = useState('')
@@ -325,10 +326,18 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
     ['annulee', 'Annulees'],
     ['tous', 'Toutes'],
   ]
+  const tableOptions = Array.from(
+    new Map(
+      commandes
+        .filter((commande) => commande.invite.table)
+        .map((commande) => [commande.invite.table, commande.invite.table])
+    ).values()
+  ).sort((a, b) => String(a).localeCompare(String(b)))
   const filteredCommandes = commandes.filter((commande) => {
     const matchStatus = statusFilter === 'tous' || commande.statut === statusFilter
     const matchTicket = ticketFilter === 'tous' || commande.invite.categorie_billet === ticketFilter
-    return matchStatus && matchTicket
+    const matchTable = tableFilter === 'tous' || String(commande.invite.table || '') === tableFilter
+    return matchStatus && matchTicket && matchTable
   })
   const unreadClientMessages = messages.filter((message) => message.auteur === 'client' && !message.lu).length
   const protocolNavItems = [
@@ -416,6 +425,13 @@ function ProtocolSpace({ config, session, onLogout, onError }) {
                   <select value={ticketFilter} onChange={(event) => { setTicketFilter(event.target.value); setSelectedCommande(null) }}>
                     <option value="tous">Tous les billets</option>
                     {categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>Table</span>
+                  <select value={tableFilter} onChange={(event) => { setTableFilter(event.target.value); setSelectedCommande(null) }}>
+                    <option value="tous">Toutes les tables</option>
+                    {tableOptions.map((table) => <option key={table} value={table}>Table {table}</option>)}
                   </select>
                 </label>
               </div>

@@ -1,20 +1,20 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ClipboardList, Database, FileSpreadsheet, Fingerprint, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
+import { AudioLines, ClipboardList, Database, FileSpreadsheet, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
 import Header from '../../components/Header'
 import { api } from '../../services/api'
 import AdminStatsExport from './AdminStatsExport'
 import BoissonAdmin from './BoissonAdmin'
 import ConfigAdmin from './ConfigAdmin'
 import InviteAdmin from './InviteAdmin'
-import PresenceBiometriqueAdmin from './PresenceBiometriqueAdmin'
+import PresenceVocaleAdmin from './PresenceVocaleAdmin'
 import QuotaAdmin from './QuotaAdmin'
 import TableAdmin from './TableAdmin'
 import ValidationBilletAdmin from './ValidationBilletAdmin'
 
 const sections = [
   { id: 'validation', label: 'Validation', hint: 'Controle des billets', icon: TicketCheck },
-  { id: 'presence', label: 'Presences', hint: 'Sorties et entrees', icon: Fingerprint },
+  { id: 'voix', label: 'Voix', hint: 'Presence vocale IA', icon: AudioLines },
   { id: 'invites', label: 'Invites', hint: 'Billets, tables et acces', icon: Users },
   { id: 'tables', label: 'Tables', hint: 'Occupation et placement', icon: Grid3X3 },
   { id: 'boissons', label: 'Boissons', hint: 'Stock et categories', icon: Wine },
@@ -116,7 +116,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
   }, [])
 
   const activeSection = sections.find((section) => section.id === tab) || sections[0]
-  const compactAdminView = ['validation', 'presence'].includes(tab)
+  const compactAdminView = ['validation', 'voix'].includes(tab)
   const tableSeats = useMemo(() => tables.reduce((acc, table) => acc + Number(table.nombre_places || 0), 0), [tables])
   const occupiedSeats = useMemo(() => tables.reduce((acc, table) => acc + Number(table.places_occupees || 0), 0), [tables])
   const totalStock = useMemo(() => boissons.reduce((acc, drink) => acc + Number(drink.quantite_stock || 0), 0), [boissons])
@@ -244,7 +244,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
               </div>
             )}
             {tab === 'validation' && <ValidationBilletAdmin invites={invites} onError={onError} />}
-            {tab === 'presence' && <PresenceBiometriqueAdmin onError={onError} />}
+            {tab === 'voix' && <PresenceVocaleAdmin onError={onError} />}
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}
             {tab === 'boissons' && <BoissonAdmin boissons={boissons} reload={load} onError={onError} />}

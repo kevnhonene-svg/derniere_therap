@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AdminSpace from './pages/admin/AdminSpace'
 import Gate from './pages/auth/Gate'
 import ClientSpace from './pages/client/ClientSpace'
+import GaleriePublic from './pages/galerie/GaleriePublic'
 import ProtocolSpace from './pages/protocole/ProtocolSpace'
 import PwaInstallPrompt from './components/PwaInstallPrompt'
 import { api } from './services/api'
@@ -10,6 +11,7 @@ import './App.css'
 function App() {
   const [config, setConfig] = useState({})
   const [session, setSession] = useState({ role: 'anonymous' })
+  const [publicView, setPublicView] = useState('gate')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -53,6 +55,7 @@ function App() {
   const logout = async () => {
     await api.logout()
     setSession({ role: 'anonymous' })
+    setPublicView('gate')
   }
 
   if (loading) return <main className="screen center">Chargement...</main>
@@ -61,8 +64,11 @@ function App() {
     <main className="app-shell">
       <PwaInstallPrompt />
       {error && <div className="toast">{error}</div>}
-      {session.role === 'anonymous' && (
-        <Gate config={config} onLogin={refreshSession} onError={setError} />
+      {session.role === 'anonymous' && publicView === 'gate' && (
+        <Gate config={config} onLogin={refreshSession} onError={setError} onOpenGallery={() => setPublicView('galerie')} />
+      )}
+      {session.role === 'anonymous' && publicView === 'galerie' && (
+        <GaleriePublic config={config} onBack={() => setPublicView('gate')} onError={setError} />
       )}
       {session.role === 'client' && (
         <ClientSpace config={config} session={session} onLogout={logout} onError={setError} />

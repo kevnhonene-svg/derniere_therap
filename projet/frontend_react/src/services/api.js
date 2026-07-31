@@ -77,6 +77,17 @@ export const api = {
   notificationsValidations: () => request('/validation-billets/notifications/'),
   presencesVocales: () => request('/presence-vocale/'),
   scannerVoix: (payload) => request('/presence-vocale/scanner/', { method: 'POST', body: payload }),
+  galerieAlbums: () => request('/galerie/albums/'),
+  galeriePhotos: (params = new URLSearchParams()) => request(`/galerie/photos/${params.toString() ? `?${params}` : ''}`),
+  galerieTelechargerPhoto: (id) => request(`/galerie/photos/${id}/telecharger/`, { method: 'POST', body: {} }),
+  galerieAlbumsAdmin: () => request('/galerie/admin/albums/'),
+  createGalerieAlbum: (payload) => request('/galerie/admin/albums/', { method: 'POST', body: payload }),
+  updateGalerieAlbum: (id, payload) => request(`/galerie/admin/albums/${id}/`, { method: 'PATCH', body: payload }),
+  deleteGalerieAlbum: (id) => request(`/galerie/admin/albums/${id}/`, { method: 'DELETE', body: {} }),
+  galeriePhotosAdmin: () => request('/galerie/admin/photos/'),
+  createGaleriePhoto: (formData) => request('/galerie/admin/photos/', { method: 'POST', body: formData }),
+  updateGaleriePhoto: (id, formData) => request(`/galerie/admin/photos/${id}/`, { method: 'PATCH', body: formData }),
+  deleteGaleriePhoto: (id) => request(`/galerie/admin/photos/${id}/`, { method: 'DELETE', body: {} }),
   messages: ({ markRead = false, inviteId = '' } = {}) => {
     const params = new URLSearchParams()
     if (markRead) params.set('mark_read', '1')

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api } from '../../services/api'
 
-function Gate({ config, onLogin, onError }) {
+function Gate({ config, onLogin, onError, onOpenGallery }) {
   const [code, setCode] = useState('')
   const [ticketLoading, setTicketLoading] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
@@ -44,6 +44,9 @@ function Gate({ config, onLogin, onError }) {
         <h1>{config.nom_application || 'COFFA'}</h1>
         <p className="lead">{config.nom_evenement}</p>
         {config.notice_client && <p className="gate-notice">{config.notice_client}</p>}
+        <button className="gallery-entry-btn" type="button" onClick={onOpenGallery}>
+          Galerie officielle
+        </button>
         <form className="ticket-form" onSubmit={loginTicket}>
           <label>
             Code billet

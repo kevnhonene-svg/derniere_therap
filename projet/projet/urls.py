@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/messages/', include('dos_app.message.urls')),
     path('api/validation-billets/', include('dos_app.validation_billet.urls')),
     path('api/presence-vocale/', include('dos_app.presence_vocale.urls')),
+    path('api/galerie/', include('dos_app.galerie.urls')),
 ]
 
 if settings.DEBUG:

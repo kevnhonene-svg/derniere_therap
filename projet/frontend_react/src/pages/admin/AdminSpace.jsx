@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AudioLines, ClipboardList, Database, FileSpreadsheet, Grid3X3, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
+import { AudioLines, ClipboardList, Database, FileSpreadsheet, Grid3X3, Images, RefreshCw, Settings, ShieldCheck, SlidersHorizontal, TicketCheck, Users, Wine } from 'lucide-react'
 import Header from '../../components/Header'
 import { api } from '../../services/api'
 import AdminStatsExport from './AdminStatsExport'
 import BoissonAdmin from './BoissonAdmin'
 import ConfigAdmin from './ConfigAdmin'
+import GalerieAdmin from './GalerieAdmin'
 import InviteAdmin from './InviteAdmin'
 import PresenceVocaleAdmin from './PresenceVocaleAdmin'
 import QuotaAdmin from './QuotaAdmin'
@@ -18,6 +19,7 @@ const sections = [
   { id: 'invites', label: 'Invites', hint: 'Billets, tables et acces', icon: Users },
   { id: 'tables', label: 'Tables', hint: 'Occupation et placement', icon: Grid3X3 },
   { id: 'boissons', label: 'Boissons', hint: 'Stock et categories', icon: Wine },
+  { id: 'galerie', label: 'Galerie', hint: 'Albums et photos', icon: Images },
   { id: 'quotas', label: 'Quotas', hint: 'Regles par billet', icon: SlidersHorizontal },
   { id: 'statistiques', label: 'Stats', hint: 'Exports XLSX filtres', icon: FileSpreadsheet },
   { id: 'configuration', label: 'Configuration', hint: 'Identite de l evenement', icon: Settings },
@@ -248,6 +250,7 @@ function AdminSpace({ config, session, setConfig, onLogout, onError }) {
             {tab === 'invites' && <InviteAdmin tables={tables} invites={invites} reload={load} onError={onError} />}
             {tab === 'tables' && <TableAdmin tables={tables} reload={load} onError={onError} />}
             {tab === 'boissons' && <BoissonAdmin boissons={boissons} reload={load} onError={onError} />}
+            {tab === 'galerie' && <GalerieAdmin onError={onError} />}
             {tab === 'quotas' && <QuotaAdmin quotas={quotas} indicationsQuotas={indicationsQuotas} reload={load} onError={onError} />}
             {tab === 'statistiques' && <AdminStatsExport tables={tables} invites={invites} boissons={boissons} quotas={quotas} onError={onError} />}
             {tab === 'configuration' && <ConfigAdmin config={config} setConfig={setConfig} onError={onError} />}

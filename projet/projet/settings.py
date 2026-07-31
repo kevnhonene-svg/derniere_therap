@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'dos_app.message',
     'dos_app.validation_billet',
     'dos_app.presence_vocale',
+    'dos_app.galerie',
 ]
 
 MIDDLEWARE = [

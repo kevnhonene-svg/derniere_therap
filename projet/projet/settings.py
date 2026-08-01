@@ -15,7 +15,7 @@ from pathlib import Path
 
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'storages',
     'dos_app.comptes',
     'dos_app.stock',
     'dos_app.commande',
@@ -143,8 +144,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [
     BASE_DIR / 'frontend_react' / 'dist',
 ]
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# S3/Object Storage Configuration for Photos
+if os.getenv('BUCKET'):  # Only configure S3 if bucket credentials are available
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_ACCESS_KEY_ID = os.getenv('ACCESS_KEY_ID')
+    AWS_S3_SECRET_ACCESS_KEY = os.getenv('SECRET_ACCESS_KEY')
+    AWS_S3_ENDPOINT_URL = os.getenv('ENDPOINT')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('BUCKET')
+    AWS_S3_REGION_NAME = os.getenv('REGION')
+    AWS_S3_CUSTOM_DOMAIN = f"{os.getenv('BUCKET')}.{os.getenv('ENDPOINT')}"
+    AWS_S3_USE_SSL = True
+    AWS_S3_VERIFY = True
+    # URLs générées pour les fichiers media
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+else:
+    # Fallback to local storage if S3 not configured
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 
@@ -152,3 +170,4 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

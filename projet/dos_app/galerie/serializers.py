@@ -17,9 +17,8 @@ class AlbumGalerieSerializer(serializers.ModelSerializer):
         photo = obj.photos.filter(actif=True).first()
         if not photo:
             return ''
-        request = self.context.get('request')
         image = photo.miniature or photo.image
-        return request.build_absolute_uri(image.url) if request else image.url
+        return image.url
 
     def get_nombre_photos(self, obj):
         return getattr(obj, 'nombre_photos', None) or obj.photos.count()
@@ -42,15 +41,13 @@ class PhotoGalerieSerializer(serializers.ModelSerializer):
     def get_image_url(self, obj):
         if not obj.image:
             return ''
-        request = self.context.get('request')
-        return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return obj.image.url
 
     def get_miniature_url(self, obj):
         image = obj.miniature or obj.image
         if not image:
             return ''
-        request = self.context.get('request')
-        return request.build_absolute_uri(image.url) if request else image.url
+        return image.url
 
     def validate_image(self, value):
         if value and value.size > 12 * 1024 * 1024:

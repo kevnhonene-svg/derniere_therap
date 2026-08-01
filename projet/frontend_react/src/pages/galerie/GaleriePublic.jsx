@@ -11,6 +11,7 @@ function GaleriePublic({ config, onBack, onError }) {
   const [viewerIndex, setViewerIndex] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedPhotos, setSelectedPhotos] = useState(new Set())
+  const [touchStart, setTouchStart] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -86,6 +87,23 @@ function GaleriePublic({ config, onBack, onError }) {
 
   const selectedList = filteredPhotos.filter((photo) => selectedPhotos.has(photo.id))
   const browsingPhotos = activeAlbum || momentOnly || search.trim()
+
+  const moveViewer = (direction) => {
+    setViewerIndex((index) => {
+      if (index === null) return index
+      const next = index + direction
+      if (next < 0 || next >= filteredPhotos.length) return index
+      return next
+    })
+  }
+
+  const handleViewerTouchEnd = (event) => {
+    if (touchStart === null) return
+    const diff = touchStart - event.changedTouches[0].clientX
+    setTouchStart(null)
+    if (Math.abs(diff) < 45) return
+    moveViewer(diff > 0 ? 1 : -1)
+  }
 
   const shareSelected = async () => {
     const links = selectedList.map((photo) => photo.image_url).join('\n')
@@ -177,19 +195,14 @@ function GaleriePublic({ config, onBack, onError }) {
       )}
 
       {currentPhoto && (
-        <div className="gallery-viewer">
+        <div
+          className="gallery-viewer"
+          onTouchStart={(event) => setTouchStart(event.touches[0].clientX)}
+          onTouchEnd={handleViewerTouchEnd}
+        >
           <button className="close" type="button" onClick={() => setViewerIndex(null)}><X size={18} /></button>
           <img src={currentPhoto.image_url} alt={currentPhoto.titre || 'Photo du gala'} />
-          <aside>
-            <h2>{currentPhoto.titre || currentPhoto.album_titre}</h2>
-            <p>{currentPhoto.description || 'Photo officielle du gala.'}</p>
-            <span>Album: {currentPhoto.album_titre}</span>
-            {currentPhoto.photographe && <span>Photographe: {currentPhoto.photographe}</span>}
-            {currentPhoto.lieu && <span>Lieu: {currentPhoto.lieu}</span>}
-            <div>
-              <button type="button" onClick={() => setViewerIndex(Math.max(viewerIndex - 1, 0))}>Precedent</button>
-              <button type="button" onClick={() => setViewerIndex(Math.min(viewerIndex + 1, filteredPhotos.length - 1))}>Suivant</button>
-            </div>
+          <aside className="gallery-viewer-actions">
             <button type="button" onClick={() => downloadPhoto(currentPhoto)}><Download size={17} /> Telecharger</button>
             <button type="button" onClick={() => sharePhoto(currentPhoto)}><Share2 size={17} /> Partager</button>
           </aside>

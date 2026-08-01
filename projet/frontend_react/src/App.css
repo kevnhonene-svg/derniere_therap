@@ -400,11 +400,12 @@
   z-index: 130;
   inset: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 18px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
   background: rgba(5, 10, 9, 0.94);
   padding: 24px;
   color: #fffdf8;
+  touch-action: pan-y;
 }
 
 .gallery-viewer img {
@@ -415,34 +416,23 @@
   object-fit: contain;
 }
 
-.gallery-viewer aside {
-  display: grid;
-  align-content: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.gallery-viewer h2,
-.gallery-viewer p {
-  margin: 0;
-}
-
-.gallery-viewer p,
-.gallery-viewer span {
-  color: #e7dcc8;
-  line-height: 1.4;
-}
-
-.gallery-viewer aside > div {
+.gallery-viewer-actions {
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.gallery-viewer aside > button {
+.gallery-viewer-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-height: 42px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 0 15px;
+  backdrop-filter: blur(10px);
 }
 
 .gallery-admin .admin-panel-head p {
@@ -638,13 +628,12 @@
   }
 
   .gallery-viewer {
-    grid-template-columns: 1fr;
-    overflow: auto;
+    overflow: hidden;
     padding: 16px;
   }
 
   .gallery-viewer img {
-    max-height: 58vh;
+    max-height: calc(100vh - 110px);
   }
 
   .gallery-admin-grid {

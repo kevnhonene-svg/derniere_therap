@@ -563,7 +563,7 @@
 
 .gallery-upload-preview img {
   width: 100%;
-  max-height: 320px;
+  max-height: 80px;
   border-radius: 6px;
   object-fit: contain;
   background: #1a211e;

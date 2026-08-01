@@ -11,9 +11,20 @@ function GaleriePublic({ config, onBack, onError }) {
   const [viewerIndex, setViewerIndex] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedPhotos, setSelectedPhotos] = useState(new Set())
+  const [selectionMode, setSelectionMode] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
+  const [longPressTimer, setLongPressTimer] = useState(null)
 
-  const load = async () => {
+  const loadAlbums = async () => {
+    try {
+      const albumData = await api.galerieAlbums()
+      setAlbums(albumData.albums || [])
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  const loadPhotos = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -21,13 +32,10 @@ function GaleriePublic({ config, onBack, onError }) {
       if (search.trim()) params.set('q', search.trim())
       if (momentOnly) params.set('moment_fort', '1')
       const shouldLoadPhotos = activeAlbum || momentOnly || search.trim()
-      const [albumData, photoData] = await Promise.all([
-        api.galerieAlbums(),
-        shouldLoadPhotos ? api.galeriePhotos(params) : Promise.resolve({ photos: [] }),
-      ])
-      setAlbums(albumData.albums || [])
+      const photoData = shouldLoadPhotos ? await api.galeriePhotos(params) : { photos: [] }
       setPhotos(photoData.photos || [])
       setSelectedPhotos(new Set())
+      setSelectionMode(false)
     } catch (err) {
       onError(err.message)
     } finally {
@@ -36,7 +44,11 @@ function GaleriePublic({ config, onBack, onError }) {
   }
 
   useEffect(() => {
-    load()
+    loadAlbums()
+  }, [])
+
+  useEffect(() => {
+    loadPhotos()
   }, [activeAlbum, momentOnly])
 
   const filteredPhotos = useMemo(() => photos, [photos])
@@ -46,7 +58,7 @@ function GaleriePublic({ config, onBack, onError }) {
 
   const submitSearch = (event) => {
     event.preventDefault()
-    load()
+    loadPhotos()
   }
 
   const downloadPhoto = async (photo) => {
@@ -112,6 +124,21 @@ function GaleriePublic({ config, onBack, onError }) {
     onError('Liens des photos selectionnees copies.')
   }
 
+  const startPhotoPress = (photoId) => {
+    const timer = window.setTimeout(() => {
+      setSelectionMode(true)
+      setSelectedPhotos(new Set([photoId]))
+    }, 2000)
+    setLongPressTimer(timer)
+  }
+
+  const cancelPhotoPress = () => {
+    if (longPressTimer) {
+      window.clearTimeout(longPressTimer)
+      setLongPressTimer(null)
+    }
+  }
+
   return (
     <section className="gallery-page">
       {!browsingPhotos && (
@@ -127,14 +154,14 @@ function GaleriePublic({ config, onBack, onError }) {
 
       {browsingPhotos && (
         <header className="gallery-compact-top">
-          <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><ArrowLeft size={20} /></button>
+          <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()); setSelectionMode(false) }}><ArrowLeft size={20} /></button>
           <strong>{momentOnly ? 'Moments forts' : search.trim() ? 'Recherche' : currentAlbum?.titre}</strong>
           <button type="button" onClick={onBack}>Sortir</button>
         </header>
       )}
 
       <nav className="gallery-nav">
-        <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><Grid3X3 size={17} /> Galeries</button>
+        <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()); setSelectionMode(false) }}><Grid3X3 size={17} /> Galeries</button>
         <button type="button" onClick={() => setMomentOnly(true)}><Star size={17} /> Moments forts</button>
       </nav>
 
@@ -167,7 +194,7 @@ function GaleriePublic({ config, onBack, onError }) {
           <strong>{selectedPhotos.size} photo(s) selectionnee(s)</strong>
           <button type="button" onClick={() => selectedList.forEach(downloadPhoto)}><Download size={16} /> Telecharger</button>
           <button type="button" onClick={shareSelected}><Share2 size={16} /> Copier liens</button>
-          <button className="secondary" type="button" onClick={() => setSelectedPhotos(new Set())}>Annuler</button>
+          <button className="secondary" type="button" onClick={() => { setSelectedPhotos(new Set()); setSelectionMode(false) }}>Annuler</button>
         </section>
       )}
 
@@ -177,18 +204,23 @@ function GaleriePublic({ config, onBack, onError }) {
         {!loading && filteredPhotos.length === 0 && <div className="admin-empty">Aucune photo disponible pour cette selection.</div>}
         {!loading && filteredPhotos.map((photo, index) => (
           <article key={photo.id}>
-            <label className="gallery-select-photo">
+            {selectionMode && (
+              <label className="gallery-select-photo">
               <input type="checkbox" checked={selectedPhotos.has(photo.id)} onChange={() => toggleSelectPhoto(photo.id)} />
               <CheckSquare size={16} />
-            </label>
-            <button type="button" onClick={() => setViewerIndex(index)}>
+              </label>
+            )}
+            <button
+              type="button"
+              onMouseDown={() => startPhotoPress(photo.id)}
+              onMouseUp={cancelPhotoPress}
+              onMouseLeave={cancelPhotoPress}
+              onTouchStart={() => startPhotoPress(photo.id)}
+              onTouchEnd={cancelPhotoPress}
+              onClick={() => selectionMode ? toggleSelectPhoto(photo.id) : setViewerIndex(index)}
+            >
               <img src={photo.miniature_url || photo.image_url} alt={photo.titre || 'Photo du gala'} loading="lazy" />
             </button>
-            <div>
-              <strong>{photo.titre || photo.album_titre}</strong>
-              <span>{photo.album_titre}</span>
-              <button type="button" onClick={() => downloadPhoto(photo)}><Download size={16} /></button>
-            </div>
           </article>
         ))}
         </section>

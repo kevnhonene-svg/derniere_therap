@@ -7,7 +7,6 @@ const emptyAlbum = {
   description: '',
   categorie: '',
   date_evenement: '',
-  ordre: 0,
   actif: true,
 }
 
@@ -22,6 +21,7 @@ const emptyPhoto = {
   actif: true,
   ordre: 0,
   image: null,
+  images: [],
 }
 
 function GalerieAdmin({ onError }) {
@@ -30,7 +30,7 @@ function GalerieAdmin({ onError }) {
   const [search, setSearch] = useState('')
   const [albumModal, setAlbumModal] = useState(null)
   const [photoModal, setPhotoModal] = useState(null)
-  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoPreview, setPhotoPreview] = useState([])
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
@@ -48,17 +48,18 @@ function GalerieAdmin({ onError }) {
 
   useEffect(() => {
     if (!photoModal) {
-      setPhotoPreview('')
+      setPhotoPreview([])
       return undefined
     }
 
-    if (photoModal.image instanceof File) {
-      const preview = URL.createObjectURL(photoModal.image)
-      setPhotoPreview(preview)
-      return () => URL.revokeObjectURL(preview)
+    const files = photoModal.images?.length ? photoModal.images : (photoModal.image instanceof File ? [photoModal.image] : [])
+    if (files.length > 0) {
+      const previews = files.map((file) => URL.createObjectURL(file))
+      setPhotoPreview(previews)
+      return () => previews.forEach((preview) => URL.revokeObjectURL(preview))
     }
 
-    setPhotoPreview(photoModal.miniature_url || photoModal.image_url || '')
+    setPhotoPreview(photoModal.miniature_url || photoModal.image_url ? [photoModal.miniature_url || photoModal.image_url] : [])
     return undefined
   }, [photoModal])
 
@@ -80,8 +81,10 @@ function GalerieAdmin({ onError }) {
     try {
       const payload = {
         ...albumModal,
-        ordre: Number(albumModal.ordre || 0),
         date_evenement: albumModal.date_evenement || null,
+      }
+      if (albumModal.id) {
+        payload.ordre = Number(albumModal.ordre || 0)
       }
       if (albumModal.id) {
         await api.updateGalerieAlbum(albumModal.id, payload)
@@ -101,16 +104,36 @@ function GalerieAdmin({ onError }) {
     event.preventDefault()
     setSaving(true)
     try {
-      const formData = new FormData()
-      Object.entries(photoModal).forEach(([key, value]) => {
-        if (key === 'id' || value === null || value === undefined) return
-        if (key === 'image' && !value) return
-        formData.append(key, value)
-      })
+      const buildFormData = (imageFile = null, index = 0) => {
+        const formData = new FormData()
+        Object.entries(photoModal).forEach(([key, value]) => {
+          if (['id', 'image', 'images', 'image_url', 'miniature_url', 'album_titre', 'telechargements', 'cree_le'].includes(key)) return
+          if (value === null || value === undefined) return
+          formData.append(key, value)
+        })
+        if (imageFile) {
+          formData.append('image', imageFile)
+          if (!photoModal.titre) {
+            formData.set('titre', imageFile.name.replace(/\.[^/.]+$/, ''))
+          } else if (photoModal.images?.length > 1) {
+            formData.set('titre', `${photoModal.titre} ${index + 1}`)
+          }
+        } else if (photoModal.image) {
+          formData.append('image', photoModal.image)
+        }
+        return formData
+      }
+
       if (photoModal.id) {
-        await api.updateGaleriePhoto(photoModal.id, formData)
+        await api.updateGaleriePhoto(photoModal.id, buildFormData())
       } else {
-        await api.createGaleriePhoto(formData)
+        const files = photoModal.images || []
+        if (files.length === 0) {
+          throw new Error('Selectionnez au moins une photo.')
+        }
+        for (const [index, file] of files.entries()) {
+          await api.createGaleriePhoto(buildFormData(file, index))
+        }
       }
       setPhotoModal(null)
       await load()
@@ -176,7 +199,7 @@ function GalerieAdmin({ onError }) {
                   <strong>{photo.titre || photo.album_titre}</strong>
                   <small>{photo.album_titre} | {photo.telechargements || 0} telechargement(s)</small>
                 </div>
-                <button type="button" onClick={() => setPhotoModal({ ...photo, image: null, album: photo.album })}><Edit3 size={16} /></button>
+                <button type="button" onClick={() => setPhotoModal({ ...photo, image: null, images: [], album: photo.album })}><Edit3 size={16} /></button>
                 <button className="danger" type="button" onClick={() => removePhoto(photo)}><Trash2 size={16} /></button>
               </article>
             ))}
@@ -194,7 +217,7 @@ function GalerieAdmin({ onError }) {
               <label className="field-label">Titre<input required value={albumModal.titre} onChange={(e) => setAlbumModal({ ...albumModal, titre: e.target.value })} /></label>
               <label className="field-label">Categorie<input value={albumModal.categorie || ''} onChange={(e) => setAlbumModal({ ...albumModal, categorie: e.target.value })} /></label>
               <label className="field-label">Date<input type="date" value={albumModal.date_evenement || ''} onChange={(e) => setAlbumModal({ ...albumModal, date_evenement: e.target.value })} /></label>
-              <label className="field-label">Ordre<input type="number" value={albumModal.ordre || 0} onChange={(e) => setAlbumModal({ ...albumModal, ordre: e.target.value })} /></label>
+              {albumModal.id && <label className="field-label">Ordre<input type="number" value={albumModal.ordre || 0} onChange={(e) => setAlbumModal({ ...albumModal, ordre: e.target.value })} /></label>}
               <label className="field-label field-wide">Description<textarea value={albumModal.description || ''} onChange={(e) => setAlbumModal({ ...albumModal, description: e.target.value })} /></label>
               <label className="check-row"><input type="checkbox" checked={albumModal.actif} onChange={(e) => setAlbumModal({ ...albumModal, actif: e.target.checked })} /> Visible au public</label>
             </div>
@@ -221,11 +244,16 @@ function GalerieAdmin({ onError }) {
               <label className="field-label">Lieu<input value={photoModal.lieu || ''} onChange={(e) => setPhotoModal({ ...photoModal, lieu: e.target.value })} /></label>
               <label className="field-label">Mots cles<input value={photoModal.mots_cles || ''} onChange={(e) => setPhotoModal({ ...photoModal, mots_cles: e.target.value })} /></label>
               <label className="field-label">Ordre<input type="number" value={photoModal.ordre || 0} onChange={(e) => setPhotoModal({ ...photoModal, ordre: e.target.value })} /></label>
-              <label className="field-label field-wide">Photo<input required={!photoModal.id} type="file" accept="image/*" onChange={(e) => setPhotoModal({ ...photoModal, image: e.target.files?.[0] || null })} /></label>
-              {photoPreview && (
+              <label className="field-label field-wide">Photo<input required={!photoModal.id} multiple={!photoModal.id} type="file" accept="image/*" onChange={(e) => {
+                const files = Array.from(e.target.files || [])
+                setPhotoModal({ ...photoModal, image: files[0] || null, images: photoModal.id ? [] : files })
+              }} /></label>
+              {photoPreview.length > 0 && (
                 <div className="gallery-upload-preview">
-                  <img src={photoPreview} alt="Apercu avant envoi" />
-                  <span>Apercu de la photo selectionnee</span>
+                  <div>
+                    {photoPreview.map((preview) => <img src={preview} alt="Apercu avant envoi" key={preview} />)}
+                  </div>
+                  <span>{photoPreview.length} photo(s) selectionnee(s)</span>
                 </div>
               )}
               <label className="field-label field-wide">Description<textarea value={photoModal.description || ''} onChange={(e) => setPhotoModal({ ...photoModal, description: e.target.value })} /></label>

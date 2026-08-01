@@ -1,4 +1,4 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
@@ -80,7 +80,9 @@ def albums_admin(request):
         albums = AlbumGalerie.objects.annotate(nombre_photos=Count('photos'))
         return success({'albums': AlbumGalerieSerializer(albums, many=True, context={'request': request}).data})
 
-    serializer = AlbumGalerieSerializer(data=json_body(request), context={'request': request})
+    payload = dict(json_body(request))
+    payload['ordre'] = (AlbumGalerie.objects.aggregate(max_ordre=Max('ordre'))['max_ordre'] or 0) + 1
+    serializer = AlbumGalerieSerializer(data=payload, context={'request': request})
     serializer.is_valid(raise_exception=True)
     album = serializer.save()
     return success({'album': album_to_dict(album, request)}, status.HTTP_201_CREATED)

@@ -2,7 +2,7 @@ from io import BytesIO
 import mimetypes
 
 from django.http import HttpResponse
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Prefetch, Q
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
@@ -49,7 +49,12 @@ def filtered_photos(request, admin=False):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def albums_public(request):
-    albums = AlbumGalerie.objects.filter(actif=True).annotate(nombre_photos=Count('photos', filter=Q(photos__actif=True)))
+    albums = (
+        AlbumGalerie.objects
+        .filter(actif=True)
+        .annotate(nombre_photos=Count('photos', filter=Q(photos__actif=True)))
+        .prefetch_related(Prefetch('photos', queryset=PhotoGalerie.objects.filter(actif=True).only('id', 'image', 'miniature', 'album_id'), to_attr='active_photos_cache'))
+    )
     return success({'albums': AlbumGalerieSerializer(albums, many=True, context={'request': request}).data})
 
 
@@ -140,7 +145,11 @@ def albums_admin(request):
         return error('Acces reserve au superadmin.', status.HTTP_403_FORBIDDEN)
 
     if request.method == 'GET':
-        albums = AlbumGalerie.objects.annotate(nombre_photos=Count('photos'))
+        albums = (
+            AlbumGalerie.objects
+            .annotate(nombre_photos=Count('photos'))
+            .prefetch_related(Prefetch('photos', queryset=PhotoGalerie.objects.filter(actif=True).only('id', 'image', 'miniature', 'album_id'), to_attr='active_photos_cache'))
+        )
         return success({'albums': AlbumGalerieSerializer(albums, many=True, context={'request': request}).data})
 
     payload = dict(json_body(request))

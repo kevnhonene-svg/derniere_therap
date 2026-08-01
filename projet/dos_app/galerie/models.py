@@ -53,15 +53,15 @@ class PhotoGalerie(models.Model):
             base_name = self.image.name.rsplit('.', 1)[0].split('/')[-1]
 
             large = image.copy()
-            large.thumbnail((2200, 2200), Image.Resampling.LANCZOS)
+            large.thumbnail((1800, 1800), Image.Resampling.LANCZOS)
             large_output = BytesIO()
-            large.save(large_output, format='WEBP', quality=86, method=6)
+            large.save(large_output, format='WEBP', quality=84, method=4)
             self.image.save(f'{base_name}.webp', ContentFile(large_output.getvalue()), save=False)
 
             thumb = image.copy()
-            thumb.thumbnail((720, 720), Image.Resampling.LANCZOS)
+            thumb.thumbnail((560, 560), Image.Resampling.LANCZOS)
             thumb_output = BytesIO()
-            thumb.save(thumb_output, format='WEBP', quality=78, method=6)
+            thumb.save(thumb_output, format='WEBP', quality=76, method=4)
             self.miniature.save(f'{base_name}_mini.webp', ContentFile(thumb_output.getvalue()), save=False)
 
         super().save(*args, **kwargs)

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, CheckSquare, Download, Grid3X3, Image, Search, Share2, Star, X } from 'lucide-react'
+import { ArrowLeft, CheckSquare, Download, Grid3X3, Image, RotateCcw, Search, Share2, Star, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { api } from '../../services/api'
 
 function GaleriePublic({ config, onBack, onError }) {
@@ -14,7 +14,9 @@ function GaleriePublic({ config, onBack, onError }) {
   const [selectionMode, setSelectionMode] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
   const [viewerControlsVisible, setViewerControlsVisible] = useState(false)
+  const [zoom, setZoom] = useState(1)
   const longPressTimer = useRef(null)
+  const photosCache = useRef(new Map())
 
   const browsingPhotos = activeAlbum || momentOnly || search.trim()
   const filteredPhotos = useMemo(() => photos, [photos])
@@ -55,8 +57,18 @@ function GaleriePublic({ config, onBack, onError }) {
       if (activeAlbum) params.set('album_id', activeAlbum)
       if (search.trim()) params.set('q', search.trim())
       if (momentOnly) params.set('moment_fort', '1')
+      const cacheKey = params.toString() || 'all'
+      if (photosCache.current.has(cacheKey)) {
+        setPhotos(photosCache.current.get(cacheKey))
+        setSelectedPhotos(new Set())
+        setSelectionMode(false)
+        setLoading(false)
+        return
+      }
       const photoData = await api.galeriePhotos(params)
-      setPhotos(photoData.photos || [])
+      const nextPhotos = photoData.photos || []
+      photosCache.current.set(cacheKey, nextPhotos)
+      setPhotos(nextPhotos)
       setSelectedPhotos(new Set())
       setSelectionMode(false)
     } catch (err) {
@@ -80,6 +92,10 @@ function GaleriePublic({ config, onBack, onError }) {
   }
 
   const jpegUrl = (photo) => `/api/galerie/photos/${photo.id}/jpeg/`
+  const fallbackImage = (event, fallbackUrl) => {
+    if (!fallbackUrl || event.currentTarget.src === fallbackUrl) return
+    event.currentTarget.src = fallbackUrl
+  }
 
   const photoFileName = (photo) => {
     const name = photo.titre || photo.album_titre || `photo-${photo.id}`
@@ -162,6 +178,7 @@ function GaleriePublic({ config, onBack, onError }) {
   const openViewer = (index) => {
     setViewerIndex(index)
     setViewerControlsVisible(false)
+    setZoom(1)
   }
 
   const moveViewer = (direction) => {
@@ -169,8 +186,13 @@ function GaleriePublic({ config, onBack, onError }) {
       if (index === null) return index
       const next = index + direction
       if (next < 0 || next >= filteredPhotos.length) return index
+      setZoom(1)
       return next
     })
+  }
+
+  const updateZoom = (nextZoom) => {
+    setZoom(Math.min(4, Math.max(1, nextZoom)))
   }
 
   const handleViewerTouchEnd = (event) => {
@@ -221,7 +243,7 @@ function GaleriePublic({ config, onBack, onError }) {
           </div>
           {albums.map((album) => (
             <button type="button" key={album.id} onClick={() => { setActiveAlbum(String(album.id)); setMomentOnly(false) }}>
-              {album.couverture ? <img src={album.couverture} alt="" loading="lazy" /> : <span><Image size={24} /></span>}
+              {album.couverture ? <img src={album.couverture} alt="" loading="eager" decoding="async" /> : <span><Image size={24} /></span>}
               <div>
                 <strong>{album.titre}</strong>
                 <small>{album.nombre_photos} photo(s)</small>
@@ -261,7 +283,13 @@ function GaleriePublic({ config, onBack, onError }) {
                 onTouchEnd={cancelPhotoPress}
                 onClick={() => selectionMode ? toggleSelectPhoto(photo.id) : openViewer(index)}
               >
-                <img src={photo.miniature_url || photo.image_url} alt={photo.titre || 'Photo du gala'} loading="lazy" />
+                <img
+                  src={photo.miniature_url || photo.image_url}
+                  alt={photo.titre || 'Photo du gala'}
+                  loading={index < 12 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  onError={(event) => fallbackImage(event, photo.miniature_proxy_url || photo.image_proxy_url)}
+                />
               </button>
             </article>
           ))}
@@ -272,12 +300,28 @@ function GaleriePublic({ config, onBack, onError }) {
         <div
           className={`gallery-viewer ${viewerControlsVisible ? 'show-controls' : ''}`}
           onClick={() => setViewerControlsVisible((visible) => !visible)}
+          onWheel={(event) => {
+            event.preventDefault()
+            updateZoom(zoom + (event.deltaY < 0 ? 0.25 : -0.25))
+          }}
           onTouchStart={(event) => setTouchStart(event.touches[0].clientX)}
           onTouchEnd={handleViewerTouchEnd}
         >
           <button className="close gallery-viewer-control" type="button" onClick={(event) => { event.stopPropagation(); setViewerIndex(null) }}><X size={18} /></button>
-          <img src={currentPhoto.image_url} alt={currentPhoto.titre || 'Photo du gala'} />
+          <img
+            src={currentPhoto.image_url}
+            alt={currentPhoto.titre || 'Photo du gala'}
+            style={{ transform: `scale(${zoom})` }}
+            onError={(event) => fallbackImage(event, currentPhoto.image_proxy_url)}
+            onDoubleClick={(event) => {
+              event.stopPropagation()
+              updateZoom(zoom > 1 ? 1 : 2)
+            }}
+          />
           <aside className="gallery-viewer-actions gallery-viewer-control">
+            <button type="button" onClick={(event) => { event.stopPropagation(); updateZoom(zoom + 0.5) }}><ZoomIn size={17} /> Zoom</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); updateZoom(zoom - 0.5) }}><ZoomOut size={17} /> Reduire</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); updateZoom(1) }}><RotateCcw size={17} /> Normal</button>
             <button type="button" onClick={(event) => { event.stopPropagation(); downloadPhoto(currentPhoto) }}><Download size={17} /> Telecharger</button>
             <button type="button" onClick={(event) => { event.stopPropagation(); sharePhoto(currentPhoto) }}><Share2 size={17} /> Partager</button>
           </aside>

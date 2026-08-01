@@ -414,6 +414,8 @@
   width: 100vw;
   height: 100vh;
   object-fit: contain;
+  transition: transform 0.18s ease;
+  cursor: zoom-in;
 }
 
 .gallery-viewer-control {
@@ -598,6 +600,17 @@
 
 .gallery-upload-preview span {
   color: #695b43;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gallery-upload-progress {
+  grid-column: 1 / -1;
+  border: 1px solid #c9dfd4;
+  border-radius: 8px;
+  background: #eef8f3;
+  color: #237a57;
+  padding: 10px 12px;
   font-size: 13px;
   font-weight: 900;
 }

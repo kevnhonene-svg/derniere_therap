@@ -32,6 +32,12 @@ function GalerieAdmin({ onError }) {
   const [photoModal, setPhotoModal] = useState(null)
   const [photoPreview, setPhotoPreview] = useState([])
   const [saving, setSaving] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
+
+  const fallbackImage = (event, fallbackUrl) => {
+    if (!fallbackUrl || event.currentTarget.src === fallbackUrl) return
+    event.currentTarget.src = fallbackUrl
+  }
 
   const load = async () => {
     const [albumData, photoData] = await Promise.all([
@@ -103,6 +109,7 @@ function GalerieAdmin({ onError }) {
   const savePhoto = async (event) => {
     event.preventDefault()
     setSaving(true)
+    setUploadProgress('')
     try {
       const buildFormData = (imageFile = null, index = 0) => {
         const formData = new FormData()
@@ -131,9 +138,17 @@ function GalerieAdmin({ onError }) {
         if (files.length === 0) {
           throw new Error('Selectionnez au moins une photo.')
         }
-        for (const [index, file] of files.entries()) {
-          await api.createGaleriePhoto(buildFormData(file, index))
-        }
+        let completed = 0
+        const queue = files.map((file, index) => ({ file, index }))
+        const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+          while (queue.length > 0) {
+            const item = queue.shift()
+            await api.createGaleriePhoto(buildFormData(item.file, item.index))
+            completed += 1
+            setUploadProgress(`${completed}/${files.length} photo(s) envoyee(s)`)
+          }
+        })
+        await Promise.all(workers)
       }
       setPhotoModal(null)
       await load()
@@ -141,6 +156,7 @@ function GalerieAdmin({ onError }) {
       onError(err.message)
     } finally {
       setSaving(false)
+      setUploadProgress('')
     }
   }
 
@@ -173,7 +189,7 @@ function GalerieAdmin({ onError }) {
           <div className="gallery-admin-list">
             {albums.map((album) => (
               <article key={album.id}>
-                {album.couverture ? <img src={album.couverture} alt="" /> : <span><Image size={22} /></span>}
+                {album.couverture ? <img src={album.couverture} alt="" loading="lazy" decoding="async" /> : <span><Image size={22} /></span>}
                 <div>
                   <strong>{album.titre}</strong>
                   <small>{album.nombre_photos || 0} photo(s) | {album.actif ? 'Visible' : 'Masque'}</small>
@@ -194,7 +210,13 @@ function GalerieAdmin({ onError }) {
           <div className="gallery-admin-photos">
             {filteredPhotos.map((photo) => (
               <article key={photo.id}>
-                <img src={photo.miniature_url || photo.image_url} alt={photo.titre || 'Photo'} />
+                <img
+                  src={photo.miniature_url || photo.image_url}
+                  alt={photo.titre || 'Photo'}
+                  loading="lazy"
+                  decoding="async"
+                  onError={(event) => fallbackImage(event, photo.miniature_proxy_url || photo.image_proxy_url)}
+                />
                 <div>
                   <strong>{photo.titre || photo.album_titre}</strong>
                   <small>{photo.album_titre} | {photo.telechargements || 0} telechargement(s)</small>
@@ -256,6 +278,7 @@ function GalerieAdmin({ onError }) {
                   <span>{photoPreview.length} photo(s) selectionnee(s)</span>
                 </div>
               )}
+              {uploadProgress && <div className="gallery-upload-progress">{uploadProgress}</div>}
               <label className="field-label field-wide">Description<textarea value={photoModal.description || ''} onChange={(e) => setPhotoModal({ ...photoModal, description: e.target.value })} /></label>
               <label className="check-row"><input type="checkbox" checked={photoModal.moment_fort} onChange={(e) => setPhotoModal({ ...photoModal, moment_fort: e.target.checked })} /> Moment fort</label>
               <label className="check-row"><input type="checkbox" checked={photoModal.actif} onChange={(e) => setPhotoModal({ ...photoModal, actif: e.target.checked })} /> Visible au public</label>

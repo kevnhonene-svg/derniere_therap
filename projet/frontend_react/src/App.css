@@ -430,7 +430,18 @@
 }
 
 .gallery-viewer .close {
+  position: fixed;
+  z-index: 140;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
   background: rgba(139, 45, 45, 0.88);
+  opacity: 1;
+  pointer-events: auto;
+  padding: 0;
 }
 
 .gallery-viewer-actions {

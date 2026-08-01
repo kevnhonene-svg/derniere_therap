@@ -5,6 +5,8 @@ from dos_app.galerie import views
 urlpatterns = [
     path('albums/', views.albums_public, name='galerie_albums_public'),
     path('photos/', views.photos_public, name='galerie_photos_public'),
+    path('photos/<int:photo_id>/image/', views.photo_image, name='galerie_photo_image'),
+    path('photos/<int:photo_id>/miniature/', views.photo_miniature, name='galerie_photo_miniature'),
     path('photos/<int:photo_id>/jpeg/', views.photo_jpeg, name='galerie_photo_jpeg'),
     path('photos/<int:photo_id>/telecharger/', views.telecharger_photo, name='galerie_telecharger_photo'),
     path('admin/albums/', views.albums_admin, name='galerie_albums_admin'),

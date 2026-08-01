@@ -1,4 +1,5 @@
 from io import BytesIO
+import mimetypes
 
 from django.http import HttpResponse
 from django.db.models import Count, Max, Q
@@ -58,6 +59,42 @@ def albums_public(request):
 def photos_public(request):
     photos = filtered_photos(request)
     return success({'photos': PhotoGalerieSerializer(photos, many=True, context={'request': request}).data})
+
+
+def can_read_photo(request, photo):
+    return (photo.actif and photo.album.actif) or is_superadmin(request)
+
+
+def serve_photo_file(request, photo_id, miniature=False):
+    try:
+        photo = PhotoGalerie.objects.select_related('album').get(pk=photo_id)
+    except PhotoGalerie.DoesNotExist:
+        return error('Photo introuvable.', status.HTTP_404_NOT_FOUND)
+
+    if not can_read_photo(request, photo):
+        return error('Photo introuvable.', status.HTTP_404_NOT_FOUND)
+
+    image = photo.miniature if miniature and photo.miniature else photo.image
+    if not image:
+        return error('Image introuvable.', status.HTTP_404_NOT_FOUND)
+
+    image.open('rb')
+    content_type = mimetypes.guess_type(image.name)[0] or 'image/webp'
+    return HttpResponse(image.read(), content_type=content_type)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def photo_image(request, photo_id):
+    return serve_photo_file(request, photo_id, miniature=False)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def photo_miniature(request, photo_id):
+    return serve_photo_file(request, photo_id, miniature=True)
 
 
 @api_view(['GET'])

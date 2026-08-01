@@ -2,6 +2,10 @@ from rest_framework import serializers
 from dos_app.galerie.models import AlbumGalerie, PhotoGalerie
 
 
+def absolute_api_url(request, path):
+    return request.build_absolute_uri(path) if request else path
+
+
 class AlbumGalerieSerializer(serializers.ModelSerializer):
     nombre_photos = serializers.SerializerMethodField()
     couverture = serializers.SerializerMethodField()
@@ -18,8 +22,7 @@ class AlbumGalerieSerializer(serializers.ModelSerializer):
         if not photo:
             return ''
         request = self.context.get('request')
-        image = photo.miniature or photo.image
-        return request.build_absolute_uri(image.url) if request else image.url
+        return absolute_api_url(request, f'/api/galerie/photos/{photo.pk}/miniature/')
 
     def get_nombre_photos(self, obj):
         return getattr(obj, 'nombre_photos', None) or obj.photos.count()
@@ -43,14 +46,14 @@ class PhotoGalerieSerializer(serializers.ModelSerializer):
         if not obj.image:
             return ''
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return absolute_api_url(request, f'/api/galerie/photos/{obj.pk}/image/')
 
     def get_miniature_url(self, obj):
         image = obj.miniature or obj.image
         if not image:
             return ''
         request = self.context.get('request')
-        return request.build_absolute_uri(image.url) if request else image.url
+        return absolute_api_url(request, f'/api/galerie/photos/{obj.pk}/miniature/')
 
     def validate_image(self, value):
         if value and value.size > 12 * 1024 * 1024:

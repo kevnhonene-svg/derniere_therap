@@ -62,27 +62,65 @@ function GaleriePublic({ config, onBack, onError }) {
     loadPhotos()
   }
 
+  const photoToJpegBlob = async (photo) => {
+    const response = await fetch(photo.image_url, { credentials: 'include' })
+    const blob = await response.blob()
+    const bitmap = await createImageBitmap(blob)
+    const canvas = document.createElement('canvas')
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    const context = canvas.getContext('2d')
+    context.drawImage(bitmap, 0, 0)
+    bitmap.close?.()
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((jpegBlob) => {
+        if (jpegBlob) {
+          resolve(jpegBlob)
+        } else {
+          reject(new Error('Conversion JPEG impossible.'))
+        }
+      }, 'image/jpeg', 0.92)
+    })
+  }
+
+  const photoFileName = (photo, extension = 'jpg') => {
+    const name = photo.titre || photo.album_titre || `photo-${photo.id}`
+    return `${name.replace(/[\\/:*?"<>|]+/g, '-').trim() || `photo-${photo.id}`}.${extension}`
+  }
+
   const downloadPhoto = async (photo) => {
     try {
       await api.galerieTelechargerPhoto(photo.id)
     } catch {
       // Le telechargement reste possible meme si le compteur echoue.
     }
+    const jpegBlob = await photoToJpegBlob(photo)
     const link = document.createElement('a')
-    link.href = photo.image_url
-    link.download = `${photo.titre || `photo-${photo.id}`}.webp`
+    link.href = URL.createObjectURL(jpegBlob)
+    link.download = photoFileName(photo)
     document.body.appendChild(link)
     link.click()
     link.remove()
+    URL.revokeObjectURL(link.href)
   }
 
   const sharePhoto = async (photo) => {
-    const url = photo.image_url
+    const title = photo.titre || 'Photo du gala'
+    try {
+      const jpegBlob = await photoToJpegBlob(photo)
+      const file = new File([jpegBlob], photoFileName(photo), { type: 'image/jpeg' })
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share({ title, files: [file] }).catch(() => {})
+        return
+      }
+    } catch {
+      // Si le navigateur refuse la conversion/fichier, on garde le partage par lien.
+    }
     if (navigator.share) {
-      await navigator.share({ title: photo.titre || 'Photo du gala', url }).catch(() => {})
+      await navigator.share({ title, url: photo.image_url }).catch(() => {})
       return
     }
-    await navigator.clipboard?.writeText(url)
+    await navigator.clipboard?.writeText(photo.image_url)
     onError('Lien copie.')
   }
 

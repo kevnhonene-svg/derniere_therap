@@ -1,7 +1,11 @@
+from io import BytesIO
+
+from django.http import HttpResponse
 from django.db.models import Count, Max, Q
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
+from PIL import Image, ImageOps
 
 from dos_app.comptes.utils import error, json_body, success
 from dos_app.galerie.models import AlbumGalerie, PhotoGalerie
@@ -54,6 +58,28 @@ def albums_public(request):
 def photos_public(request):
     photos = filtered_photos(request)
     return success({'photos': PhotoGalerieSerializer(photos, many=True, context={'request': request}).data})
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def photo_jpeg(request, photo_id):
+    try:
+        photo = PhotoGalerie.objects.get(pk=photo_id, actif=True, album__actif=True)
+    except PhotoGalerie.DoesNotExist:
+        return error('Photo introuvable.', status.HTTP_404_NOT_FOUND)
+
+    photo.image.open('rb')
+    image = ImageOps.exif_transpose(Image.open(photo.image))
+    if image.mode not in ('RGB', 'L'):
+        image = image.convert('RGB')
+
+    output = BytesIO()
+    image.save(output, format='JPEG', quality=92, optimize=True)
+    filename = (photo.titre or photo.album.titre or f'photo-{photo.pk}').replace('/', '-').replace('\\', '-')
+    response = HttpResponse(output.getvalue(), content_type='image/jpeg')
+    response['Content-Disposition'] = f'attachment; filename="{filename}.jpg"'
+    return response
 
 
 @api_view(['POST'])

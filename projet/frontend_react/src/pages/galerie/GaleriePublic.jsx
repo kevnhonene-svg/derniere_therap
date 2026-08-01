@@ -207,7 +207,7 @@ function GaleriePublic({ config, onBack, onError }) {
     <section className="gallery-page">
       {!browsingPhotos && (
         <header className="gallery-hero" style={heroCover ? { backgroundImage: `linear-gradient(rgba(8, 12, 11, 0.38), rgba(8, 12, 11, 0.68)), url(${heroCover})` } : undefined}>
-          <button className="gallery-back" type="button" onClick={onBack}><ArrowLeft size={18} /> Retour</button>
+          {onBack && <button className="gallery-back" type="button" onClick={onBack}><ArrowLeft size={18} /> Retour</button>}
           <div>
             <span>{config?.nom_application || 'Gala 2026'}</span>
             <h1>Galerie officielle du Gala 2026</h1>
@@ -220,7 +220,7 @@ function GaleriePublic({ config, onBack, onError }) {
         <header className="gallery-compact-top">
           <button type="button" onClick={resetToAlbums}><ArrowLeft size={20} /></button>
           <strong>{momentOnly ? 'Moments forts' : search.trim() ? 'Recherche' : currentAlbum?.titre}</strong>
-          <button type="button" onClick={onBack}>Sortir</button>
+          {onBack && <button type="button" onClick={onBack}>Sortir</button>}
         </header>
       )}
 

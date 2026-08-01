@@ -43,7 +43,6 @@ function Gate({ config, onLogin, onError, onOpenGallery }) {
         <p className="eyebrow">{config.sous_titre}</p>
         <h1>{config.nom_application || 'COFFA'}</h1>
         <p className="lead">{config.nom_evenement}</p>
-        {config.notice_client && <p className="gate-notice">{config.notice_client}</p>}
         <button className="gallery-entry-btn" type="button" onClick={onOpenGallery}>
           Galerie officielle
         </button>

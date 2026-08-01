@@ -85,7 +85,9 @@ def serve_photo_file(request, photo_id, miniature=False):
 
     image.open('rb')
     content_type = mimetypes.guess_type(image.name)[0] or 'image/webp'
-    return HttpResponse(image.read(), content_type=content_type)
+    response = HttpResponse(image.read(), content_type=content_type)
+    response['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 
 @api_view(['GET'])

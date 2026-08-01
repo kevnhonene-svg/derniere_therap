@@ -35,7 +35,7 @@ class AlbumGalerieSerializer(serializers.ModelSerializer):
         if not photo:
             return ''
         request = self.context.get('request')
-        return file_url(request, photo.miniature or photo.image) or absolute_api_url(request, f'/api/galerie/photos/{photo.pk}/miniature/')
+        return absolute_api_url(request, f'/api/galerie/photos/{photo.pk}/miniature/')
 
     def get_nombre_photos(self, obj):
         return getattr(obj, 'nombre_photos', None) or obj.photos.count()

@@ -33,8 +33,10 @@ urlpatterns = [
     path('api/galerie/', include('dos_app.galerie.urls')),
 ]
 
-if settings.DEBUG:
+if settings.DEBUG and str(settings.MEDIA_URL).startswith('/'):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
     urlpatterns += [
         path('assets/<path:path>', serve, {'document_root': settings.BASE_DIR / 'frontend_react' / 'dist' / 'assets'}),
         re_path(r'^(?P<path>manifest\.webmanifest|sw\.js|favicon\.png|apple-touch-icon\.png|favicon\.svg|icons\.svg)$', serve, {'document_root': settings.BASE_DIR / 'frontend_react' / 'dist'}),

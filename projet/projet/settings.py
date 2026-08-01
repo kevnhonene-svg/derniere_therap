@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'dos_app.validation_billet',
     'dos_app.presence_vocale',
     'dos_app.galerie',
-    'storages',
 ]
 
 MIDDLEWARE = [
@@ -148,6 +147,18 @@ STATICFILES_DIRS = [
 # Media files (photo uploads) - S3 storage
 # https://docs.djangoproject.com/en/5.2/ref/settings/#media-url
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+
 AWS_S3_ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
 AWS_S3_ENDPOINT_URL = os.environ.get("ENDPOINT")
@@ -157,6 +168,9 @@ AWS_S3_REGION_NAME = os.environ.get("REGION")
 if AWS_S3_ACCESS_KEY_ID and AWS_S3_SECRET_ACCESS_KEY and AWS_S3_ENDPOINT_URL and AWS_STORAGE_BUCKET_NAME:
     # S3-backed storage (production)
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+    }
 
     AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_ENDPOINT_URL.replace('https://', '').replace('http://', '')}"
     AWS_S3_FILE_OVERWRITE = False
@@ -165,10 +179,6 @@ if AWS_S3_ACCESS_KEY_ID and AWS_S3_SECRET_ACCESS_KEY and AWS_S3_ENDPOINT_URL and
     AWS_S3_ADDRESSING_STYLE = "virtual"
 
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-else:
-    # Fallback to local filesystem storage (local development)
-    MEDIA_URL = 'media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024

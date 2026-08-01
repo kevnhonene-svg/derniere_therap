@@ -401,9 +401,9 @@
   inset: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 12px;
-  background: rgba(5, 10, 9, 0.94);
-  padding: 24px;
+  gap: 0;
+  background: #000;
+  padding: 0;
   color: #fffdf8;
   touch-action: pan-y;
 }
@@ -411,12 +411,31 @@
 .gallery-viewer img {
   align-self: center;
   justify-self: center;
-  max-width: 100%;
-  max-height: calc(100vh - 48px);
+  width: 100vw;
+  height: 100vh;
   object-fit: contain;
 }
 
+.gallery-viewer-control {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.gallery-viewer.show-controls .gallery-viewer-control {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gallery-viewer .close {
+  background: rgba(139, 45, 45, 0.88);
+}
+
 .gallery-viewer-actions {
+  position: fixed;
+  right: 16px;
+  bottom: 18px;
+  left: 16px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
@@ -629,11 +648,12 @@
 
   .gallery-viewer {
     overflow: hidden;
-    padding: 16px;
+    padding: 0;
   }
 
   .gallery-viewer img {
-    max-height: calc(100vh - 110px);
+    width: 100vw;
+    height: 100vh;
   }
 
   .gallery-admin-grid {

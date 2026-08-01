@@ -14,6 +14,7 @@ function GaleriePublic({ config, onBack, onError }) {
   const [selectionMode, setSelectionMode] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
   const [longPressTimer, setLongPressTimer] = useState(null)
+  const [viewerControlsVisible, setViewerControlsVisible] = useState(false)
 
   const loadAlbums = async () => {
     try {
@@ -117,6 +118,11 @@ function GaleriePublic({ config, onBack, onError }) {
     moveViewer(diff > 0 ? 1 : -1)
   }
 
+  const openViewer = (index) => {
+    setViewerIndex(index)
+    setViewerControlsVisible(false)
+  }
+
   const shareSelected = async () => {
     const links = selectedList.map((photo) => photo.image_url).join('\n')
     if (!links) return
@@ -217,7 +223,7 @@ function GaleriePublic({ config, onBack, onError }) {
               onMouseLeave={cancelPhotoPress}
               onTouchStart={() => startPhotoPress(photo.id)}
               onTouchEnd={cancelPhotoPress}
-              onClick={() => selectionMode ? toggleSelectPhoto(photo.id) : setViewerIndex(index)}
+              onClick={() => selectionMode ? toggleSelectPhoto(photo.id) : openViewer(index)}
             >
               <img src={photo.miniature_url || photo.image_url} alt={photo.titre || 'Photo du gala'} loading="lazy" />
             </button>
@@ -228,15 +234,16 @@ function GaleriePublic({ config, onBack, onError }) {
 
       {currentPhoto && (
         <div
-          className="gallery-viewer"
+          className={`gallery-viewer ${viewerControlsVisible ? 'show-controls' : ''}`}
+          onClick={() => setViewerControlsVisible((visible) => !visible)}
           onTouchStart={(event) => setTouchStart(event.touches[0].clientX)}
           onTouchEnd={handleViewerTouchEnd}
         >
-          <button className="close" type="button" onClick={() => setViewerIndex(null)}><X size={18} /></button>
+          <button className="close gallery-viewer-control" type="button" onClick={(event) => { event.stopPropagation(); setViewerIndex(null) }}><X size={18} /></button>
           <img src={currentPhoto.image_url} alt={currentPhoto.titre || 'Photo du gala'} />
-          <aside className="gallery-viewer-actions">
-            <button type="button" onClick={() => downloadPhoto(currentPhoto)}><Download size={17} /> Telecharger</button>
-            <button type="button" onClick={() => sharePhoto(currentPhoto)}><Share2 size={17} /> Partager</button>
+          <aside className="gallery-viewer-actions gallery-viewer-control">
+            <button type="button" onClick={(event) => { event.stopPropagation(); downloadPhoto(currentPhoto) }}><Download size={17} /> Telecharger</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); sharePhoto(currentPhoto) }}><Share2 size={17} /> Partager</button>
           </aside>
         </div>
       )}

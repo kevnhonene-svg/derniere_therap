@@ -30,6 +30,7 @@ function GalerieAdmin({ onError }) {
   const [search, setSearch] = useState('')
   const [albumModal, setAlbumModal] = useState(null)
   const [photoModal, setPhotoModal] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
@@ -44,6 +45,22 @@ function GalerieAdmin({ onError }) {
   useEffect(() => {
     load().catch((err) => onError(err.message))
   }, [])
+
+  useEffect(() => {
+    if (!photoModal) {
+      setPhotoPreview('')
+      return undefined
+    }
+
+    if (photoModal.image instanceof File) {
+      const preview = URL.createObjectURL(photoModal.image)
+      setPhotoPreview(preview)
+      return () => URL.revokeObjectURL(preview)
+    }
+
+    setPhotoPreview(photoModal.miniature_url || photoModal.image_url || '')
+    return undefined
+  }, [photoModal])
 
   const filteredPhotos = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -205,6 +222,12 @@ function GalerieAdmin({ onError }) {
               <label className="field-label">Mots cles<input value={photoModal.mots_cles || ''} onChange={(e) => setPhotoModal({ ...photoModal, mots_cles: e.target.value })} /></label>
               <label className="field-label">Ordre<input type="number" value={photoModal.ordre || 0} onChange={(e) => setPhotoModal({ ...photoModal, ordre: e.target.value })} /></label>
               <label className="field-label field-wide">Photo<input required={!photoModal.id} type="file" accept="image/*" onChange={(e) => setPhotoModal({ ...photoModal, image: e.target.files?.[0] || null })} /></label>
+              {photoPreview && (
+                <div className="gallery-upload-preview">
+                  <img src={photoPreview} alt="Apercu avant envoi" />
+                  <span>Apercu de la photo selectionnee</span>
+                </div>
+              )}
               <label className="field-label field-wide">Description<textarea value={photoModal.description || ''} onChange={(e) => setPhotoModal({ ...photoModal, description: e.target.value })} /></label>
               <label className="check-row"><input type="checkbox" checked={photoModal.moment_fort} onChange={(e) => setPhotoModal({ ...photoModal, moment_fort: e.target.checked })} /> Moment fort</label>
               <label className="check-row"><input type="checkbox" checked={photoModal.actif} onChange={(e) => setPhotoModal({ ...photoModal, actif: e.target.checked })} /> Visible au public</label>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Download, Grid3X3, Image, Search, Share2, Star, X } from 'lucide-react'
+import { ArrowLeft, CheckSquare, Download, Grid3X3, Image, Search, Share2, Star, X } from 'lucide-react'
 import { api } from '../../services/api'
 
 function GaleriePublic({ config, onBack, onError }) {
@@ -10,6 +10,7 @@ function GaleriePublic({ config, onBack, onError }) {
   const [momentOnly, setMomentOnly] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [selectedPhotos, setSelectedPhotos] = useState(new Set())
 
   const load = async () => {
     setLoading(true)
@@ -18,12 +19,14 @@ function GaleriePublic({ config, onBack, onError }) {
       if (activeAlbum) params.set('album_id', activeAlbum)
       if (search.trim()) params.set('q', search.trim())
       if (momentOnly) params.set('moment_fort', '1')
+      const shouldLoadPhotos = activeAlbum || momentOnly || search.trim()
       const [albumData, photoData] = await Promise.all([
         api.galerieAlbums(),
-        api.galeriePhotos(params),
+        shouldLoadPhotos ? api.galeriePhotos(params) : Promise.resolve({ photos: [] }),
       ])
       setAlbums(albumData.albums || [])
       setPhotos(photoData.photos || [])
+      setSelectedPhotos(new Set())
     } catch (err) {
       onError(err.message)
     } finally {
@@ -37,6 +40,7 @@ function GaleriePublic({ config, onBack, onError }) {
 
   const filteredPhotos = useMemo(() => photos, [photos])
   const currentPhoto = viewerIndex !== null ? filteredPhotos[viewerIndex] : null
+  const currentAlbum = albums.find((album) => String(album.id) === String(activeAlbum))
   const heroCover = albums.find((album) => album.couverture)?.couverture || filteredPhotos[0]?.miniature_url
 
   const submitSearch = (event) => {
@@ -68,6 +72,27 @@ function GaleriePublic({ config, onBack, onError }) {
     onError('Lien copie.')
   }
 
+  const toggleSelectPhoto = (photoId) => {
+    setSelectedPhotos((current) => {
+      const next = new Set(current)
+      if (next.has(photoId)) {
+        next.delete(photoId)
+      } else {
+        next.add(photoId)
+      }
+      return next
+    })
+  }
+
+  const selectedList = filteredPhotos.filter((photo) => selectedPhotos.has(photo.id))
+
+  const shareSelected = async () => {
+    const links = selectedList.map((photo) => photo.image_url).join('\n')
+    if (!links) return
+    await navigator.clipboard?.writeText(links)
+    onError('Liens des photos selectionnees copies.')
+  }
+
   return (
     <section className="gallery-page">
       <header className="gallery-hero" style={heroCover ? { backgroundImage: `linear-gradient(rgba(8, 12, 11, 0.38), rgba(8, 12, 11, 0.68)), url(${heroCover})` } : undefined}>
@@ -80,7 +105,7 @@ function GaleriePublic({ config, onBack, onError }) {
       </header>
 
       <nav className="gallery-nav">
-        <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false) }}><Grid3X3 size={17} /> Galeries</button>
+        <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><Grid3X3 size={17} /> Galeries</button>
         <button type="button" onClick={() => setMomentOnly(true)}><Star size={17} /> Moments forts</button>
       </nav>
 
@@ -91,7 +116,7 @@ function GaleriePublic({ config, onBack, onError }) {
       </form>
 
       <section className="gallery-albums">
-        {albums.map((album) => (
+        {!activeAlbum && !momentOnly && !search.trim() && albums.map((album) => (
           <button className={String(activeAlbum) === String(album.id) ? 'active' : ''} type="button" key={album.id} onClick={() => { setActiveAlbum(String(album.id)); setMomentOnly(false) }}>
             {album.couverture ? <img src={album.couverture} alt="" loading="lazy" /> : <span><Image size={24} /></span>}
             <strong>{album.titre}</strong>
@@ -100,11 +125,35 @@ function GaleriePublic({ config, onBack, onError }) {
         ))}
       </section>
 
-      <section className="gallery-grid">
+      {(activeAlbum || momentOnly || search.trim()) && (
+        <section className="gallery-current-head">
+          <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><ArrowLeft size={17} /> Albums</button>
+          <div>
+            <span>{momentOnly ? 'Selection' : search.trim() ? 'Recherche' : 'Album'}</span>
+            <h2>{momentOnly ? 'Moments forts' : search.trim() ? `Resultats pour "${search}"` : currentAlbum?.titre}</h2>
+          </div>
+        </section>
+      )}
+
+      {selectedPhotos.size > 0 && (
+        <section className="gallery-selection-bar">
+          <strong>{selectedPhotos.size} photo(s) selectionnee(s)</strong>
+          <button type="button" onClick={() => selectedList.forEach(downloadPhoto)}><Download size={16} /> Telecharger</button>
+          <button type="button" onClick={shareSelected}><Share2 size={16} /> Copier liens</button>
+          <button className="secondary" type="button" onClick={() => setSelectedPhotos(new Set())}>Annuler</button>
+        </section>
+      )}
+
+      {(activeAlbum || momentOnly || search.trim()) && (
+        <section className="gallery-grid">
         {loading && <div className="admin-empty">Chargement des photos...</div>}
         {!loading && filteredPhotos.length === 0 && <div className="admin-empty">Aucune photo disponible pour cette selection.</div>}
         {!loading && filteredPhotos.map((photo, index) => (
           <article key={photo.id}>
+            <label className="gallery-select-photo">
+              <input type="checkbox" checked={selectedPhotos.has(photo.id)} onChange={() => toggleSelectPhoto(photo.id)} />
+              <CheckSquare size={16} />
+            </label>
             <button type="button" onClick={() => setViewerIndex(index)}>
               <img src={photo.miniature_url || photo.image_url} alt={photo.titre || 'Photo du gala'} loading="lazy" />
             </button>
@@ -115,7 +164,8 @@ function GaleriePublic({ config, onBack, onError }) {
             </div>
           </article>
         ))}
-      </section>
+        </section>
+      )}
 
       {currentPhoto && (
         <div className="gallery-viewer">

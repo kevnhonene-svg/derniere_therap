@@ -85,6 +85,7 @@ function GaleriePublic({ config, onBack, onError }) {
   }
 
   const selectedList = filteredPhotos.filter((photo) => selectedPhotos.has(photo.id))
+  const browsingPhotos = activeAlbum || momentOnly || search.trim()
 
   const shareSelected = async () => {
     const links = selectedList.map((photo) => photo.image_url).join('\n')
@@ -95,14 +96,24 @@ function GaleriePublic({ config, onBack, onError }) {
 
   return (
     <section className="gallery-page">
-      <header className="gallery-hero" style={heroCover ? { backgroundImage: `linear-gradient(rgba(8, 12, 11, 0.38), rgba(8, 12, 11, 0.68)), url(${heroCover})` } : undefined}>
-        <button className="gallery-back" type="button" onClick={onBack}><ArrowLeft size={18} /> Retour</button>
-        <div>
-          <span>{config?.nom_application || 'Gala 2026'}</span>
-          <h1>Galerie officielle du Gala 2026</h1>
-          <p>Revivez les meilleurs moments de la soiree. Parcourez, recherchez et telechargez gratuitement les photos officielles.</p>
-        </div>
-      </header>
+      {!browsingPhotos && (
+        <header className="gallery-hero" style={heroCover ? { backgroundImage: `linear-gradient(rgba(8, 12, 11, 0.38), rgba(8, 12, 11, 0.68)), url(${heroCover})` } : undefined}>
+          <button className="gallery-back" type="button" onClick={onBack}><ArrowLeft size={18} /> Retour</button>
+          <div>
+            <span>{config?.nom_application || 'Gala 2026'}</span>
+            <h1>Galerie officielle du Gala 2026</h1>
+            <p>Revivez les meilleurs moments de la soiree. Parcourez, recherchez et telechargez gratuitement les photos officielles.</p>
+          </div>
+        </header>
+      )}
+
+      {browsingPhotos && (
+        <header className="gallery-compact-top">
+          <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><ArrowLeft size={20} /></button>
+          <strong>{momentOnly ? 'Moments forts' : search.trim() ? 'Recherche' : currentAlbum?.titre}</strong>
+          <button type="button" onClick={onBack}>Sortir</button>
+        </header>
+      )}
 
       <nav className="gallery-nav">
         <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><Grid3X3 size={17} /> Galeries</button>
@@ -116,24 +127,22 @@ function GaleriePublic({ config, onBack, onError }) {
       </form>
 
       <section className="gallery-albums">
+        {!activeAlbum && !momentOnly && !search.trim() && (
+          <div className="gallery-albums-title">
+            <h2>Albums</h2>
+            <p>Photos et videos officielles organisees par moments.</p>
+          </div>
+        )}
         {!activeAlbum && !momentOnly && !search.trim() && albums.map((album) => (
           <button className={String(activeAlbum) === String(album.id) ? 'active' : ''} type="button" key={album.id} onClick={() => { setActiveAlbum(String(album.id)); setMomentOnly(false) }}>
             {album.couverture ? <img src={album.couverture} alt="" loading="lazy" /> : <span><Image size={24} /></span>}
-            <strong>{album.titre}</strong>
-            <small>{album.nombre_photos} photo(s)</small>
+            <div>
+              <strong>{album.titre}</strong>
+              <small>{album.nombre_photos} photo(s)</small>
+            </div>
           </button>
         ))}
       </section>
-
-      {(activeAlbum || momentOnly || search.trim()) && (
-        <section className="gallery-current-head">
-          <button type="button" onClick={() => { setActiveAlbum(''); setMomentOnly(false); setSearch(''); setPhotos([]); setSelectedPhotos(new Set()) }}><ArrowLeft size={17} /> Albums</button>
-          <div>
-            <span>{momentOnly ? 'Selection' : search.trim() ? 'Recherche' : 'Album'}</span>
-            <h2>{momentOnly ? 'Moments forts' : search.trim() ? `Resultats pour "${search}"` : currentAlbum?.titre}</h2>
-          </div>
-        </section>
-      )}
 
       {selectedPhotos.size > 0 && (
         <section className="gallery-selection-bar">
@@ -144,7 +153,7 @@ function GaleriePublic({ config, onBack, onError }) {
         </section>
       )}
 
-      {(activeAlbum || momentOnly || search.trim()) && (
+      {browsingPhotos && (
         <section className="gallery-grid">
         {loading && <div className="admin-empty">Chargement des photos...</div>}
         {!loading && filteredPhotos.length === 0 && <div className="admin-empty">Aucune photo disponible pour cette selection.</div>}
